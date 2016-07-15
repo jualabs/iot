@@ -1,5 +1,5 @@
 #include <IRremoteESP8266.h>
-#include <Arduino.h
+#include <Arduino.h>
 
 // 0 : TOWER; 1 : WALL
 const int AC_TYPE  = 1;
