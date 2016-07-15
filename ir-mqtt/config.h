@@ -1,0 +1,9 @@
+const char* ssid = "******";
+const char* password = "******";
+const char* mqtt_server = "******";
+const int   mqtt_port = 1883;
+const char* mqtt_client = "******";
+const char* mqtt_usr = "******";
+const char* mqtt_psw = "******";
+const char* inTopic = "in";
+const char* outTopic = "out";
