@@ -2,6 +2,7 @@
 #include <PubSubClient.h>
 #include <IRremoteESP8266.h>
 #include "lg-ac.h"
+#include "lg-tv.h"
 #include "config.h"
 
 // Update these with values suitable for your network.
@@ -54,17 +55,18 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   Serial.println();
 
-  // Switch on the LED if an 1 was received as first character
-  if ((char)payload[0] == '1') {
-    digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off by making the voltage HIGH
-    ac_power_down(&irsend);
-    // but actually the LED is on; this is because
-    // it is acive low on the ESP-01)
-  } else {
-    digitalWrite(BUILTIN_LED, LOW);   // Turn the LED on (Note that LOW is the voltage level
-    ac_activate(24, 1, &irsend);
-  }
-
+  switch ( (char)payload[0] )
+  {
+     case 'l':
+      digitalWrite(BUILTIN_LED, LOW);   // Turn the LED on (Note that LOW is the voltage level
+      ac_power_down(&irsend);
+      break;
+ 
+     case 'd':
+      digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off by making the voltage HIGH
+      ac_activate(24, 1, &irsend);
+      break; 
+   }
 }
 
 void reconnect() {
