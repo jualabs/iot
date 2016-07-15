@@ -1,4 +1,5 @@
 #include <IRremoteESP8266.h>
+#include <Arduino.h
 
 // 0 : TOWER; 1 : WALL
 const int AC_TYPE  = 1;
@@ -21,7 +22,10 @@ unsigned long AC_CODE_TO_SEND;
 
 void ac_send_code(unsigned long code, IRsend *irsend)
 {
-  irsend->sendLG(code, 28);
+  for (int i=0;i<3;i++){
+    irsend->sendLG(code, 28);
+    delay(40);
+  }
 }
 
 void ac_activate(int temperature, int air_flow, IRsend *irsend)
