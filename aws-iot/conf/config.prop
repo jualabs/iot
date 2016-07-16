@@ -1,0 +1,7 @@
+[General]
+thingname = *******
+rootcert = certs/******
+certificate = certs/*****
+key = certs/*****
+endpoint = ******
+port = 8883
