@@ -4,7 +4,7 @@ import time
 import random
 
 mqttc = mqtt.Client("python_pub")
-mqttc.username_pw_set("EThoxloDv35yQYLHlKVPIb","S2hyEhOwdMGH")
+mqttc.username_pw_set("EThoxloDv35yQYLHlKVPIb","xxxx")
 mqttc.connect("mqtt.rapifire.com", 1883)
 while True:
    r = random.random()+17.31
