@@ -1,0 +1,2 @@
+eclipse.preferences.version=1
+libraries=["AceButton","TimeAlarms","Time","JLed","DHT sensor library","Adafruit Unified Sensor","DHT sensor library for ESPx"]
