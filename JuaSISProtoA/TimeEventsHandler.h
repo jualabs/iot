@@ -1,5 +1,5 @@
-#ifndef __BTN_EVENTS_HANDLER_H__
-#define __BTN_EVENTS_HANDLER_H__
+#ifndef __TIME_EVENTS_HANDLER_H__
+#define __TIME_EVENTS_HANDLER_H__
 
 #include <Arduino.h>
 #include <Time.h>
