@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <AceButton.h>
 using namespace ace_button;
-#include "SystemState.h"
+#include "SystemController.h"
 
 // buttons definitions
 #define WHITE_BTN       D5
@@ -14,9 +14,10 @@ using namespace ace_button;
 
 class ButtonEventsHandler {
 	public:
-		ButtonEventsHandler();
-		void checkButtons();
+		ButtonEventsHandler(SystemController* sc);
+		void checkButtonEvents();
 	private:
+		SystemController* sc;
 		// main handler
 		void mainBtnEventHandler(AceButton* button, uint8_t eventType, uint8_t buttonState);
 		// derivated handlers

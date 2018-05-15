@@ -8,9 +8,12 @@
 #ifndef __CONTEXT_H__
 #define __CONTEXT_H__
 
+#include <Arduino.h>
+
 class Context {
 	public:
 		Context();
+		enum class State {STAND_BY, RUNNING, GET_DATA, FAILED};
 		void resetHourContext();
 		void resetDayContext();
 		unsigned int getAutoIrrigationDuration() const;
@@ -53,8 +56,12 @@ class Context {
 		void setOneHourMinHum(float oneHourMinHum);
 		float getOneHourMinTemp() const;
 		void setOneHourMinTemp(float oneHourMinTemp);
+		State getCurrentState() const;
+		void setCurrentState(State currentState);
+		char* getCurrentContextString(uint32_t ts);
 
 	private:
+		State currentState;
 		bool isManuallyIrrigating;
 		bool isAutoIrrigationSuspended;
 		unsigned long autoIrrigationStartTime;

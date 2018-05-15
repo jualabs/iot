@@ -17,29 +17,16 @@
 
 */
 #include <Arduino.h>
+#include "SystemController.h"
 
-#include "Actuators.h"
-#include "ButtonEventsHandler.h"
-#include "Datalogger.h"
-#include "SystemState.h"
-#include "Sensors.h"
-//#include "time_events_handler.h"
-
-Datalogger dl;
-SystemState ss;
-Sensors sensors;
-Actuators actuators;
+SystemController sc;
 
 void setup()
 {
-	//initBtnEventsHandler();
-	//initTimeEventsHandler();
 	delay(5000);
 }
 
 void loop()
 {
-	ss.stateLedUpdate();
-	//checkBtnEvents();
-	//checkTimeEvents();
+	sc.loop();
 }

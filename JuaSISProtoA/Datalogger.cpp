@@ -57,3 +57,18 @@ void Datalogger::loadFiles() {
   
 }
 
+void Datalogger::appendLineInFile(char* filename, char* line) {
+	// append text line to a file
+	File file;
+	// write csv file
+	file = SPIFFS.open(filename, "a");
+	if(file) {
+		file.println(line);
+		file.close();
+	}
+	else {
+#ifdef DEBUG
+		Serial.println("ERROR: opening '%s'...", filename);
+#endif
+	}
+}

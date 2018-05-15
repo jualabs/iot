@@ -4,7 +4,8 @@ AdjustableButtonConfig btnConfig;
 AceButton redBtn(RED_BTN);
 AceButton whiteBtn(WHITE_BTN);
 
-ButtonEventsHandler::ButtonEventsHandler() {
+ButtonEventsHandler::ButtonEventsHandler(SystemController *sc) {
+	this->sc = sc;
 	// configure buttons
 	btnConfig.setEventHandler(mainBtnEventHandler);
 	btnConfig.setFeature(ButtonConfig::kFeatureLongPress);
@@ -18,7 +19,7 @@ ButtonEventsHandler::ButtonEventsHandler() {
 	whiteBtn.init(WHITE_BTN, HIGH, WHITE_BTN_ID);
 }
 
-void ButtonEventsHandler::checkButtons() {
+void ButtonEventsHandler::checkButtonEvents() {
 	redBtn.check();
 	whiteBtn.check();
 }
@@ -26,8 +27,8 @@ void ButtonEventsHandler::checkButtons() {
 void ButtonEventsHandler::mainBtnEventHandler(AceButton* button, uint8_t eventType, uint8_t buttonState) {
   int btnId = button->getId();
 
-  switch(experimentState.state) {
-    case STAND_BY:
+  switch(sc->getContext()->getCurrentState()) {
+    case Context::State::STAND_BY:
       switch (eventType) {
         case AceButton::kEventReleased:
           // do nothing
@@ -44,12 +45,12 @@ void ButtonEventsHandler::mainBtnEventHandler(AceButton* button, uint8_t eventTy
           break;
       }
       break;
-    case RUNNING:
+    case Context::State::RUNNING:
       switch (eventType) {
         case AceButton::kEventReleased:
           switch(btnId) {
             case WHITE_BTN_ID:
-              if(!experimentState.isManuallyIrrigating)       
+              if(this->sc->getContext()->getIsManuallyIrrigating() == false)
                 startManualIrrigationBtnEventHandler();  
               else
                 stopManualIrrigationBtnEventHandler();
@@ -71,7 +72,7 @@ void ButtonEventsHandler::mainBtnEventHandler(AceButton* button, uint8_t eventTy
           break;
       }
       break;
-    case GET_DATA:
+    case Context::State::GET_DATA:
       switch (eventType) {
         case AceButton::kEventReleased:
           switch(btnId) {
@@ -95,7 +96,7 @@ void ButtonEventsHandler::mainBtnEventHandler(AceButton* button, uint8_t eventTy
           break;
       }
       break;
-    case FAILED:
+    case Context::State::FAILED:
       switch (eventType) {
         case AceButton::kEventReleased:
           switch(btnId) {
@@ -116,9 +117,7 @@ void ButtonEventsHandler::mainBtnEventHandler(AceButton* button, uint8_t eventTy
 }
 
 void ButtonEventsHandler::startExperimentBtnEventHandler() {
-  changeState(RUNNING);
-  // reconfigure status led
-  statusLed = JLed(STATUS_LED).Breathe(3000).Forever();
+  this->sc->changeState(Context::State::RUNNING);
   // enable alarms
   // daily irrigation alarm
   Alarm.enable(startIrrigationEventAlarmId);
@@ -142,8 +141,12 @@ void ButtonEventsHandler::startManualIrrigationBtnEventHandler() {
 #ifdef DEBUG
   Serial.print("start manual irrigation...\n");
 #endif
-  experimentState.isManuallyIrrigating = true;
-  digitalWrite(MAN_PUMP_RELAY, LOW);
+
+  sc->getContext()->setIsManuallyIrrigating(true);
+  sc->getContext()->setManIrrigationStartTime(sc->getCurrentTimeStamp());
+  /* turn manual pump on */
+  sc->getActuators()->setManPump(true);
+  sc->get
   experimentState.autoIrrigationStartTime = RTC.get();
 }
 

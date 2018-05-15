@@ -1,6 +1,7 @@
 #include "Context.h"
 
 Context::Context() {
+	currentState = State::STAND_BY;
 	isManuallyIrrigating = false;
 	isAutoIrrigationSuspended = false;
 	autoIrrigationStartTime = 0;
@@ -202,4 +203,34 @@ float Context::getOneHourMinTemp() const {
 
 void Context::setOneHourMinTemp(float oneHourMinTemp) {
 	this->oneHourMinTemp = oneHourMinTemp;
+}
+
+Context::State Context::getCurrentState() const {
+	return currentState;
+}
+
+void Context::setCurrentState(State currentState) {
+	this->currentState = currentState;
+}
+
+char* Context::getCurrentContextString(uint32_t ts) {
+	char minTmpStr[10];
+	char maxTmpStr[10];
+	char avgTmpStr[10];
+	char minHumStr[10];
+	char maxHumStr[10];
+	char avgHumStr[10];
+
+	dtostrf(oneHourMinTemp, 9, 2, minTmpStr);
+	dtostrf(oneHourMaxTemp, 9, 2, maxTmpStr);
+	dtostrf(oneHourAvgTemp, 9, 2, avgTmpStr);
+
+	dtostrf(oneHourMinHum, 9, 2, minHumStr);
+	dtostrf(oneHourMaxHum, 9, 2, maxHumStr);
+	dtostrf(oneHourAvgHum, 9, 2, avgHumStr);
+
+	char *str = (char *) malloc(sizeof(char) * 100);
+	sprintf(str, "%l,%s,%s,%s,%s,%s,%s", ts, minTmpStr, maxTmpStr, avgTmpStr, minHumStr, maxHumStr, avgHumStr);
+
+	return str;
 }

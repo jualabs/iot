@@ -4,15 +4,26 @@
 #include <Arduino.h>
 #include <Time.h>
 #include <TimeLib.h>
-#include <DS1302RTC.h>
 #include <TimeAlarms.h>
+#include <math.h>
+#include "SystemController.h"
+#include "Parameters.h"
 
-void initTimeEventsHandler();
-void checkTimeEvents();
-void cfgMinAndHourTimerEventHandler();
-void minTimeEventHandler();
-void hourTimeEventHandler();
-void dailyTimeEventHandler();
-void stopAutoIrrigationTimeEventHandler();
+class TimeEventsHandler {
+	public:
+		TimeEventsHandler(SystemController* sc);
+		void checkTimeEvents();
+	private:
+		SystemController* sc;
+		enum class ALARM_IDS {MIN_EVENT, HOUR_EVENT, DAILY_EVENT, START_IRRIGATION_EVENT, SIZE};
+		AlarmId alarmIds[ALARM_IDS::SIZE];
+		void initAlarms();
+		void cfgMinAndHourTimerEventHandler();
+		void minTimeEventHandler();
+		void hourTimeEventHandler();
+		void dailyTimeEventHandler();
+		void startAutoIrrigationTimeEventHandler();
+		void stopAutoIrrigationTimeEventHandler();
+};
 
 #endif
