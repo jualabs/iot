@@ -54,7 +54,7 @@ void Datalogger::loadFiles() {
 #endif
        }
     }
-  
+
 }
 
 void Datalogger::appendLineInFile(char* filename, char* line) {
@@ -69,6 +69,60 @@ void Datalogger::appendLineInFile(char* filename, char* line) {
 	else {
 #ifdef DEBUG
 		Serial.println("ERROR: opening '%s'...", filename);
+#endif
+	}
+}
+
+void Datalogger::dumpFiles() {
+	File file;
+	// dump csv files
+	for(int i = 0; i < NUM_CSV_FILES; i++) {
+		file = SPIFFS.open(csv_files[i], "r");
+		if(file) {
+			Serial.print("********** ");
+			Serial.print(csv_files[i]);
+			Serial.println(" **********");
+			while(file.available())
+				Serial.println(file.readStringUntil('\n'));
+			file.close();
+		}
+		else {
+#ifdef DEBUG
+			Serial.print("ERROR: opening file -> ");
+			Serial.println(csv_files[i]);
+#endif
+	    }
+	}
+	// dump json files
+	for(int i = 0; i < NUM_JSON_FILES; i++) {
+		file = SPIFFS.open(json_files[i], "r");
+		if(file) {
+			Serial.print("********** ");
+			Serial.print(json_files[i]);
+			Serial.println(" **********");
+			while(file.available())
+				Serial.println(file.readStringUntil('\n'));
+			file.close();
+	    }
+	    else {
+#ifdef DEBUG
+	    	Serial.print("ERROR: opening file -> ");
+	    	Serial.println(json_files[i]);
+#endif
+	    }
+	}
+	// dump error log
+	file = SPIFFS.open("/log_error.txt", "w");
+	if(file) {
+		Serial.println("********** /log_error.txt **********");
+	    while(file.available())
+	    	Serial.println(file.readStringUntil('\n'));
+	    file.close();
+	}
+	else {
+#ifdef DEBUG
+		Serial.print("ERROR: opening file -> ");
+	    Serial.println("/log_error.txt");
 #endif
 	}
 }

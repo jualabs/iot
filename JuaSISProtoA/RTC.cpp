@@ -1,7 +1,7 @@
 #include "RTC.h"
 
-RTC::RTC() {
-	rtc = DS1302RTC(D0, D2, D1);
+RTC::RTC() : rtc(DS1302RTC(D0, D2, D1)) {
+
 }
 
 uint32_t RTC::getTimeStamp() {
@@ -14,4 +14,5 @@ bool RTC::getTimeElements(tmElements_t* tm) {
 	}
 	else {
 		return false;
+	}
 }

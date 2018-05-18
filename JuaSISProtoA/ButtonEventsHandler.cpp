@@ -1,22 +1,29 @@
 #include "ButtonEventsHandler.h"
 
 AdjustableButtonConfig btnConfig;
-AceButton redBtn(RED_BTN);
-AceButton whiteBtn(WHITE_BTN);
+AceButton redBtn;
+AceButton whiteBtn;
 
-ButtonEventsHandler::ButtonEventsHandler(SystemController *sc) {
-	this->sc = sc;
+ButtonEventsHandler* beh;
+
+void buttonHandlerWrapper(AceButton* button, uint8_t eventType, uint8_t buttonState) {
+	beh->mainBtnEventHandler(button, eventType, buttonState);
+}
+
+ButtonEventsHandler::ButtonEventsHandler(Context ctx, Actuators act, Datalogger dl, RTC rtc, TimeEventsHandler teh) :
+										context(ctx), actuators(act), datalogger(dl), rtc(rtc), timeEventsHandler(teh) {
 	// configure buttons
-	btnConfig.setEventHandler(mainBtnEventHandler);
+	pinMode(RED_BTN, INPUT);
+	pinMode(WHITE_BTN, INPUT);
+	redBtn.init(RED_BTN, HIGH, RED_BTN_ID);
+	whiteBtn.init(WHITE_BTN, HIGH, WHITE_BTN_ID);
+	// configure buttons
+	btnConfig.setEventHandler(buttonHandlerWrapper);
 	btnConfig.setFeature(ButtonConfig::kFeatureLongPress);
 	btnConfig.setFeature(ButtonConfig::kFeatureSuppressAfterLongPress);
 	btnConfig.setLongPressDelay(5000);
-	pinMode(RED_BTN, INPUT);
 	redBtn.setButtonConfig(&btnConfig);
-	redBtn.init(RED_BTN, HIGH, RED_BTN_ID);
-	pinMode(WHITE_BTN, INPUT);
 	whiteBtn.setButtonConfig(&btnConfig);
-	whiteBtn.init(WHITE_BTN, HIGH, WHITE_BTN_ID);
 }
 
 void ButtonEventsHandler::checkButtonEvents() {
@@ -27,7 +34,7 @@ void ButtonEventsHandler::checkButtonEvents() {
 void ButtonEventsHandler::mainBtnEventHandler(AceButton* button, uint8_t eventType, uint8_t buttonState) {
   int btnId = button->getId();
 
-  switch(sc->getContext()->getCurrentState()) {
+  switch(context.getCurrentState()) {
     case Context::State::STAND_BY:
       switch (eventType) {
         case AceButton::kEventReleased:
@@ -50,7 +57,7 @@ void ButtonEventsHandler::mainBtnEventHandler(AceButton* button, uint8_t eventTy
         case AceButton::kEventReleased:
           switch(btnId) {
             case WHITE_BTN_ID:
-              if(this->sc->getContext()->getIsManuallyIrrigating() == false)
+              if(context.getIsManuallyIrrigating() == false)
                 startManualIrrigationBtnEventHandler();  
               else
                 stopManualIrrigationBtnEventHandler();
@@ -117,185 +124,119 @@ void ButtonEventsHandler::mainBtnEventHandler(AceButton* button, uint8_t eventTy
 }
 
 void ButtonEventsHandler::startExperimentBtnEventHandler() {
-  this->sc->changeState(Context::State::RUNNING);
-  // enable alarms
-  // daily irrigation alarm
-  Alarm.enable(startIrrigationEventAlarmId);
-  // daily consolidation meteorological data alarm
-  Alarm.enable(dailyEventAlarmId);
-  unsigned int nextHour = (hour() + 1) % 24;
-  // start once the every hour and minute event configuration function
-  Alarm.alarmOnce(nextHour, 0, 1, cfgMinAndHourEvent);
 #ifdef DEBUG
-  Serial.print("experiment started...\n");
+	Serial.print("experiment started...\n");
 #endif
+	// change the current system state
+	context.changeState(Context::State::RUNNING);
+	// start the time events
+	timeEventsHandler.startTimeEvents();
 }
 
 void ButtonEventsHandler::enterGetDataStateBtnEventHandler() {
 #ifdef DEBUG
-  Serial.println("enterGetDataStateBtnEventHandler");
+	Serial.println("enterGetDataStateBtnEventHandler");
 #endif
 }
 
 void ButtonEventsHandler::startManualIrrigationBtnEventHandler() {
 #ifdef DEBUG
-  Serial.print("start manual irrigation...\n");
+	Serial.print("start manual irrigation...\n");
 #endif
-
-  sc->getContext()->setIsManuallyIrrigating(true);
-  sc->getContext()->setManIrrigationStartTime(sc->getCurrentTimeStamp());
-  /* turn manual pump on */
-  sc->getActuators()->setManPump(true);
-  sc->get
-  experimentState.autoIrrigationStartTime = RTC.get();
+	context.setIsManuallyIrrigating(true);
+	context.setManIrrigationStartTime(rtc.getTimeStamp());
+	/* turn manual pump on */
+	actuators.setManPump(true);
 }
 
 void ButtonEventsHandler::stopManualIrrigationBtnEventHandler() {
 #ifdef DEBUG
-  Serial.print("stop manual irrigation...\n");
+	Serial.print("stop manual irrigation...\n");
 #endif
-  experimentState.isManuallyIrrigating = false;
-  digitalWrite(MAN_PUMP_RELAY, HIGH);
-  unsigned long stopTime = RTC.get();
-  File file;  
-  // write csv file
-  file = SPIFFS.open("/man-irrig.csv", "a");
-  if(file) {
-    char line[120];
-    sprintf(line,"%ld,%ld,%ld", experimentState.manIrrigationStartTime, stopTime, (stopTime-experimentState.manIrrigationStartTime));
-    file.println(line);
-    file.close();
-  }
-else {
-#ifdef DEBUG
-  Serial.println("ERROR: opening '/man-irrig.csv'...");
-#endif
-  }
+
+	context.setIsManuallyIrrigating(false);
+	actuators.setManPump(false);
+
+	uint32_t startTime = context.getManIrrigationStartTime();
+	uint32_t stopTime = rtc.getTimeStamp();
+
+	char line[120];
+	sprintf(line,"%l,%l,%l", startTime, stopTime, (stopTime - startTime));
+
+	datalogger.appendLineInFile("/man-irrig.csv", line);
 }
 
 void ButtonEventsHandler::suspendAutoIrrigationBtnEventHandler() {
-  experimentState.isAutoIrrigationSuspended = true;
 #ifdef DEBUG
-  Serial.print("suspend automatic irrigation...\n");
+	Serial.print("suspend automatic irrigation...\n");
 #endif
+	context.setIsAutoIrrigationSuspended(true);
 }
 
 void ButtonEventsHandler::dumpExperimentStateBtnEventHandler() {
 #ifdef DEBUG
-  Serial.println("dumpExperimentStateBtnEventHandler");
+	Serial.println("dumpExperimentStateBtnEventHandler");
 #endif
-  Serial.println("********** current experiment state **********");
-  Serial.print("started: ");
-  Serial.println(experimentState.started);
-  Serial.print("isManuallyIrrigating: ");
-  Serial.println(experimentState.isManuallyIrrigating);
-  Serial.print("isAutoIrrigationSuspended: ");
-  Serial.println(experimentState.isAutoIrrigationSuspended);
-  Serial.print("autoIrrigationDuration: ");
-  Serial.println(experimentState.autoIrrigationDuration);
-  Serial.println("----------------------------------------------");
-  Serial.print("currentMinute: ");
-  Serial.println(experimentState.currentMinute);
-  Serial.print("oneHourMaxTemp: ");
-  Serial.println(experimentState.oneHourMaxTemp);
-  Serial.print("oneHourMaxHum: ");
-  Serial.println(experimentState.oneHourMaxHum);
-  Serial.print("oneHourMinTemp: ");
-  Serial.println(experimentState.oneHourMinTemp);
-  Serial.print("oneHourMinHum: ");
-  Serial.println(experimentState.oneHourMinHum);
-  Serial.print("oneHourAvgTemp: ");
-  Serial.println(experimentState.oneHourAvgTemp);
-  Serial.print("oneHourAvgHum: ");
-  Serial.println(experimentState.oneHourAvgHum);
-  Serial.println("----------------------------------------------");
-  Serial.print("currentHour: ");
-  Serial.println(experimentState.currentHour);
-  Serial.print("oneDayMaxTemp: ");
-  Serial.println(experimentState.oneDayMaxTemp);
-  Serial.print("oneDayMaxHum: ");
-  Serial.println(experimentState.oneDayMaxHum);
-  Serial.print("oneDayMinTemp: ");
-  Serial.println(experimentState.oneDayMinTemp);
-  Serial.print("oneDayMinHum: ");
-  Serial.println(experimentState.oneDayMinHum);
-  Serial.print("oneDayAvgTemp: ");
-  Serial.println(experimentState.oneDayAvgTemp);
-  Serial.print("oneDayAvgHum: ");
-  Serial.println(experimentState.oneDayAvgHum);
-  Serial.println("----------------------------------------------");
-  Serial.print("currentDay: ");
-  Serial.println(experimentState.currentDay);
-  Serial.println("**********************************************");
+	Serial.println("********** current experiment state **********");
+	Serial.print("state: ");
+	Serial.println(context.getCurrentStateString());
+	Serial.print("isManuallyIrrigating: ");
+	Serial.println(context.getIsManuallyIrrigating());
+	Serial.print("isAutoIrrigationSuspended: ");
+	Serial.println(context.getIsAutoIrrigationSuspended());
+	Serial.print("autoIrrigationDuration: ");
+	Serial.println(context.getAutoIrrigationDuration());
+	Serial.println("----------------------------------------------");
+	Serial.print("currentMinute: ");
+	Serial.println(context.getCurrentMinute());
+	Serial.print("oneHourMaxTemp: ");
+	Serial.println(context.getOneHourMaxTemp());
+	Serial.print("oneHourMaxHum: ");
+	Serial.println(context.getOneHourMaxHum());
+	Serial.print("oneHourMinTemp: ");
+	Serial.println(context.getOneHourMinTemp());
+	Serial.print("oneHourMinHum: ");
+	Serial.println(context.getOneHourMinHum());
+	Serial.print("oneHourAvgTemp: ");
+	Serial.println(context.getOneHourAvgTemp());
+	Serial.print("oneHourAvgHum: ");
+	Serial.println(context.getOneHourAvgHum());
+	Serial.println("----------------------------------------------");
+	Serial.print("currentHour: ");
+	Serial.println(context.getCurrentHour());
+	Serial.print("oneDayMaxTemp: ");
+	Serial.println(context.getOneDayMaxTemp());
+	Serial.print("oneDayMaxHum: ");
+	Serial.println(context.getOneDayMaxHum());
+	Serial.print("oneDayMinTemp: ");
+	Serial.println(context.getOneDayMinTemp());
+	Serial.print("oneDayMinHum: ");
+	Serial.println(context.getOneDayMinHum());
+	Serial.print("oneDayAvgTemp: ");
+	Serial.println(context.getOneDayAvgTemp());
+	Serial.print("oneDayAvgHum: ");
+	Serial.println(context.getOneDayAvgHum());
+	Serial.println("----------------------------------------------");
+	Serial.print("currentDay: ");
+	Serial.println(context.getCurrentDay());
+Serial.println("**********************************************");
 }
 
 void ButtonEventsHandler::stopExperimentBtnEventHandler() {
 #ifdef DEBUG
-  Serial.print("experiment stoped...\n");
+	Serial.print("experiment stoped...\n");
 #endif
-  statusLed = JLed(STATUS_LED).Blink(500, 500).Forever();
-  experimentState.started = false;
-  Alarm.disable(minEventAlarmId);
-  Alarm.disable(hourEventAlarmId);
-  Alarm.disable(dailyEventAlarmId);
-  Alarm.disable(startIrrigationEventAlarmId);
+	// change the current system state
+	context.changeState(Context::State::STAND_BY);
+	// stop the time events
+	timeEventsHandler.stopTimeEvents();
 }
 
 void ButtonEventsHandler::dumpFilesBtnEventHandler() {
 #ifdef DEBUG
-  Serial.println("dumpFilesBtnEventHandler");
+	Serial.println("dumpFilesBtnEventHandler");
 #endif
-  File file;
-  // dump csv files
-  for(int i = 0; i < NUM_CSV_FILES; i++) {
-    file = SPIFFS.open(csv_files[i], "r");
-    if(file) {
-      Serial.print("********** ");
-      Serial.print(csv_files[i]);
-      Serial.println(" **********");
-      while(file.available())
-        Serial.println(file.readStringUntil('\n'));
-      file.close();
-    }
-    else {
-#ifdef DEBUG
-      Serial.print("ERROR: opening file -> ");
-      Serial.println(csv_files[i]);
-#endif
-    }
-  }
-  // dump json files
-  for(int i = 0; i < NUM_JSON_FILES; i++) {
-    file = SPIFFS.open(json_files[i], "r");
-    if(file) {
-      Serial.print("********** ");
-      Serial.print(json_files[i]);
-      Serial.println(" **********");
-      while(file.available())
-        Serial.println(file.readStringUntil('\n'));
-      file.close();
-    }
-    else {
-#ifdef DEBUG
-      Serial.print("ERROR: opening file -> ");
-      Serial.println(json_files[i]);
-#endif
-    }
-  }
-  // dump error log
-  file = SPIFFS.open("/log_error.txt", "w");
-  if(file) {
-    Serial.println("********** /log_error.txt **********");
-    while(file.available())
-      Serial.println(file.readStringUntil('\n'));
-    file.close();
-  }
-  else {
-#ifdef DEBUG
-    Serial.print("ERROR: opening file -> ");
-    Serial.println("/log_error.txt");
-#endif
-  }
+	datalogger.dumpFiles();
 }
 
 void ButtonEventsHandler::eraseFilesBtnEventHandler() {
@@ -309,6 +250,3 @@ void ButtonEventsHandler::dumpErrorLogBtnEventHandler() {
   Serial.println("dumpErrorLogBtnEventHandler");
 #endif   
 }
-
-
-

@@ -1,6 +1,9 @@
 #include "Context.h"
 
-Context::Context() {
+
+Context::Context() : stateLed(JLed(STATE_LED_PIN)) {
+	/* init led */
+	stateLed.Off();
 	currentState = State::STAND_BY;
 	isManuallyIrrigating = false;
 	isAutoIrrigationSuspended = false;
@@ -209,6 +212,25 @@ Context::State Context::getCurrentState() const {
 	return currentState;
 }
 
+char* Context::getCurrentStateString() const {
+	char * returnStr = (char *) malloc(sizeof(char) * 10);
+	switch(currentState) {
+		case State::STAND_BY:
+			sprintf(returnStr,"STAND_BY");
+			break;
+		case State::RUNNING:
+			sprintf(returnStr,"RUNNING");
+			break;
+		case State::GET_DATA:
+			sprintf(returnStr,"GET_DATA");
+			break;
+		case State::FAILED:
+			sprintf(returnStr,"FAILED");
+			break;
+	}
+	return returnStr;
+}
+
 void Context::setCurrentState(State currentState) {
 	this->currentState = currentState;
 }
@@ -233,4 +255,29 @@ char* Context::getCurrentContextString(uint32_t ts) {
 	sprintf(str, "%l,%s,%s,%s,%s,%s,%s", ts, minTmpStr, maxTmpStr, avgTmpStr, minHumStr, maxHumStr, avgHumStr);
 
 	return str;
+}
+
+void Context::changeState(State toState) {
+	/* change current state */
+	setCurrentState(toState);
+	// update led ctx
+
+	switch(toState) {
+		case State::STAND_BY:
+			stateLed.Breathe(3000).Forever();
+			break;
+		case State::RUNNING:
+			stateLed.On();
+			break;
+		case State::GET_DATA:
+			stateLed.Blink(500, 500).Forever();
+			break;
+		case State::FAILED:
+			stateLed.Blink(150, 150).Forever();
+			break;
+	}
+}
+
+JLed* Context::getStateLed() {
+	return &stateLed;
 }

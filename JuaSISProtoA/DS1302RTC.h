@@ -6,8 +6,9 @@
 #ifndef DS1302RTC_h
 #define DS1302RTC_h
 
-#include <Time.h>
 #include <Arduino.h>
+#include <Time.h>
+#include <TimeLib.h>
 
 
 // Register names.

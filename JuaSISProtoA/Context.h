@@ -9,6 +9,9 @@
 #define __CONTEXT_H__
 
 #include <Arduino.h>
+#include <jled.h>
+
+#define STATE_LED_PIN D4
 
 class Context {
 	public:
@@ -57,10 +60,14 @@ class Context {
 		float getOneHourMinTemp() const;
 		void setOneHourMinTemp(float oneHourMinTemp);
 		State getCurrentState() const;
+		char* getCurrentStateString() const;
 		void setCurrentState(State currentState);
 		char* getCurrentContextString(uint32_t ts);
+		void changeState(State toState);
+		JLed* getStateLed();
 
 	private:
+		JLed stateLed;
 		State currentState;
 		bool isManuallyIrrigating;
 		bool isAutoIrrigationSuspended;
