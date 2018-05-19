@@ -7,23 +7,27 @@ AceButton whiteBtn;
 ButtonEventsHandler* beh;
 
 void buttonHandlerWrapper(AceButton* button, uint8_t eventType, uint8_t buttonState) {
+	Serial.println("wrapper");
 	beh->mainBtnEventHandler(button, eventType, buttonState);
 }
 
 ButtonEventsHandler::ButtonEventsHandler(Context ctx, Actuators act, Datalogger dl, RTC rtc, TimeEventsHandler teh) :
-										context(ctx), actuators(act), datalogger(dl), rtc(rtc), timeEventsHandler(teh) {
+										context(ctx), actuators(act), datalogger(dl), rtc(rtc), timeEventsHandler(teh) {}
+
+void ButtonEventsHandler::initButtons() {
 	// configure buttons
-	pinMode(RED_BTN, INPUT);
-	pinMode(WHITE_BTN, INPUT);
-	redBtn.init(RED_BTN, HIGH, RED_BTN_ID);
-	whiteBtn.init(WHITE_BTN, HIGH, WHITE_BTN_ID);
-	// configure buttons
+	beh = this;
 	btnConfig.setEventHandler(buttonHandlerWrapper);
 	btnConfig.setFeature(ButtonConfig::kFeatureLongPress);
 	btnConfig.setFeature(ButtonConfig::kFeatureSuppressAfterLongPress);
 	btnConfig.setLongPressDelay(5000);
+	pinMode(RED_BTN, INPUT);
 	redBtn.setButtonConfig(&btnConfig);
+	redBtn.init(RED_BTN, HIGH, RED_BTN_ID);
+	pinMode(WHITE_BTN, INPUT);
 	whiteBtn.setButtonConfig(&btnConfig);
+	whiteBtn.init(WHITE_BTN, HIGH, WHITE_BTN_ID);
+
 }
 
 void ButtonEventsHandler::checkButtonEvents() {
@@ -33,6 +37,8 @@ void ButtonEventsHandler::checkButtonEvents() {
 
 void ButtonEventsHandler::mainBtnEventHandler(AceButton* button, uint8_t eventType, uint8_t buttonState) {
   int btnId = button->getId();
+
+  Serial.println("main handler");
 
   switch(context.getCurrentState()) {
     case Context::State::STAND_BY:
@@ -126,11 +132,12 @@ void ButtonEventsHandler::mainBtnEventHandler(AceButton* button, uint8_t eventTy
 void ButtonEventsHandler::startExperimentBtnEventHandler() {
 #ifdef DEBUG
 	Serial.print("experiment started...\n");
-#endif
+#else
 	// change the current system state
 	context.changeState(Context::State::RUNNING);
 	// start the time events
 	timeEventsHandler.startTimeEvents();
+#endif
 }
 
 void ButtonEventsHandler::enterGetDataStateBtnEventHandler() {
@@ -142,18 +149,18 @@ void ButtonEventsHandler::enterGetDataStateBtnEventHandler() {
 void ButtonEventsHandler::startManualIrrigationBtnEventHandler() {
 #ifdef DEBUG
 	Serial.print("start manual irrigation...\n");
-#endif
+#else
 	context.setIsManuallyIrrigating(true);
 	context.setManIrrigationStartTime(rtc.getTimeStamp());
 	/* turn manual pump on */
 	actuators.setManPump(true);
+#endif
 }
 
 void ButtonEventsHandler::stopManualIrrigationBtnEventHandler() {
 #ifdef DEBUG
 	Serial.print("stop manual irrigation...\n");
-#endif
-
+#else
 	context.setIsManuallyIrrigating(false);
 	actuators.setManPump(false);
 
@@ -164,19 +171,21 @@ void ButtonEventsHandler::stopManualIrrigationBtnEventHandler() {
 	sprintf(line,"%l,%l,%l", startTime, stopTime, (stopTime - startTime));
 
 	datalogger.appendLineInFile("/man-irrig.csv", line);
+#endif
 }
 
 void ButtonEventsHandler::suspendAutoIrrigationBtnEventHandler() {
 #ifdef DEBUG
 	Serial.print("suspend automatic irrigation...\n");
-#endif
+#else
 	context.setIsAutoIrrigationSuspended(true);
+#endif
 }
 
 void ButtonEventsHandler::dumpExperimentStateBtnEventHandler() {
 #ifdef DEBUG
 	Serial.println("dumpExperimentStateBtnEventHandler");
-#endif
+#else
 	Serial.println("********** current experiment state **********");
 	Serial.print("state: ");
 	Serial.println(context.getCurrentStateString());
@@ -219,24 +228,27 @@ void ButtonEventsHandler::dumpExperimentStateBtnEventHandler() {
 	Serial.println("----------------------------------------------");
 	Serial.print("currentDay: ");
 	Serial.println(context.getCurrentDay());
-Serial.println("**********************************************");
+	Serial.println("**********************************************");
+#endif
 }
 
 void ButtonEventsHandler::stopExperimentBtnEventHandler() {
 #ifdef DEBUG
 	Serial.print("experiment stoped...\n");
-#endif
+#else
 	// change the current system state
 	context.changeState(Context::State::STAND_BY);
 	// stop the time events
 	timeEventsHandler.stopTimeEvents();
+#endif
 }
 
 void ButtonEventsHandler::dumpFilesBtnEventHandler() {
 #ifdef DEBUG
 	Serial.println("dumpFilesBtnEventHandler");
-#endif
+#else
 	datalogger.dumpFiles();
+#endif
 }
 
 void ButtonEventsHandler::eraseFilesBtnEventHandler() {

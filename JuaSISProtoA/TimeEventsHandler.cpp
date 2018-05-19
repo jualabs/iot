@@ -29,11 +29,12 @@ TimeEventsHandler::TimeEventsHandler(Context ctx, Actuators act, Sensors sens, D
 		setTime(tm.Hour,tm.Minute,tm.Second,tm.Day,tm.Month,tmYearToCalendar(tm.Year));
 	}
 	else {
-		// logError("ERROR: rtc read");
+		// Serial.println("ERROR: rtc read");
+		// log error
 	}
 }
 
-void TimeEventsHandler::initAlarms() {
+void TimeEventsHandler::initTimeEvents() {
 	alarmIds[(uint8_t) ALARM_IDS::START_IRRIGATION_EVENT] = Alarm.alarmRepeat(autoIrrigationStartHour,
 																	autoIrrigationStartMinute, 0,
 																	startAutoIrrigationTimeEventHandlerWrapper);

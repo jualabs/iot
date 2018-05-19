@@ -5,6 +5,11 @@ SystemController::SystemController() : context(Context()), rtc(RTC()), datalogge
 									   timeEventsHandler(TimeEventsHandler(context, actuators, sensors, datalogger, rtc)),
 									   buttonEventsHandler(ButtonEventsHandler(context, actuators, datalogger, rtc, timeEventsHandler)) {};
 
+void SystemController::setup() {
+	// timeEventsHandler.initTimeEvents();
+	buttonEventsHandler.initButtons();
+}
+
 void SystemController::loop() {
 	stateLedUpdate();
 	timeEventsHandler.checkTimeEvents();

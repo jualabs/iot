@@ -14,6 +14,7 @@
 class SystemController {
 	public:
 		SystemController();
+		void setup();
 		void loop();
 		void stateLedUpdate();
 

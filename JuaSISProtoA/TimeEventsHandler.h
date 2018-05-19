@@ -17,6 +17,7 @@ class SystemController;
 class TimeEventsHandler {
 	public:
 		TimeEventsHandler(Context ctx, Actuators act, Sensors sens, Datalogger dl, RTC rtc);
+		void initTimeEvents();
 		void checkTimeEvents();
 		void startTimeEvents();
 		void stopTimeEvents();
@@ -35,7 +36,6 @@ class TimeEventsHandler {
 		RTC rtc;
 		enum class ALARM_IDS {MIN_EVENT, HOUR_EVENT, DAILY_EVENT, START_IRRIGATION_EVENT, SIZE};
 		AlarmId alarmIds[(uint8_t) ALARM_IDS::SIZE];
-		void initAlarms();
 };
 
 #endif

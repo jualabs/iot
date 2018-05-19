@@ -23,7 +23,8 @@ SystemController sc;
 
 void setup()
 {
-	delay(5000);
+	Serial.begin(9600);
+	sc.setup();
 }
 
 void loop()

@@ -22,6 +22,8 @@ class ButtonEventsHandler {
 		// main button handler
 		void mainBtnEventHandler(AceButton* button, uint8_t eventType, uint8_t buttonState);
 		void checkButtonEvents();
+		void initButtons();
+		static void btnHandler(AceButton* button, uint8_t eventType, uint8_t buttonState);
 	private:
 		Context context;
 		Actuators actuators;
