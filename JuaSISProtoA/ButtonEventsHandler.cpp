@@ -7,7 +7,6 @@ AceButton whiteBtn;
 ButtonEventsHandler* beh;
 
 void buttonHandlerWrapper(AceButton* button, uint8_t eventType, uint8_t buttonState) {
-	Serial.println("wrapper");
 	beh->mainBtnEventHandler(button, eventType, buttonState);
 }
 
@@ -37,8 +36,6 @@ void ButtonEventsHandler::checkButtonEvents() {
 
 void ButtonEventsHandler::mainBtnEventHandler(AceButton* button, uint8_t eventType, uint8_t buttonState) {
   int btnId = button->getId();
-
-  Serial.println("main handler");
 
   switch(context.getCurrentState()) {
     case Context::State::STAND_BY:
@@ -130,20 +127,22 @@ void ButtonEventsHandler::mainBtnEventHandler(AceButton* button, uint8_t eventTy
 }
 
 void ButtonEventsHandler::startExperimentBtnEventHandler() {
-#ifdef DEBUG
+// #ifdef DEBUG
 	Serial.print("experiment started...\n");
-#else
+// #else
 	// change the current system state
 	context.changeState(Context::State::RUNNING);
 	// start the time events
 	timeEventsHandler.startTimeEvents();
-#endif
+// #endif
 }
 
 void ButtonEventsHandler::enterGetDataStateBtnEventHandler() {
-#ifdef DEBUG
+// #ifdef DEBUG
 	Serial.println("enterGetDataStateBtnEventHandler");
-#endif
+// #else
+	context.changeState(Context::State::GET_DATA);
+// #endif
 }
 
 void ButtonEventsHandler::startManualIrrigationBtnEventHandler() {

@@ -1,10 +1,34 @@
 #include "Context.h"
 
+JLed Context::stateLed = JLed(STATE_LED_PIN).Off();
+Context::State Context::currentState = State::STAND_BY;
+bool Context::isManuallyIrrigating = false;
+bool Context::isAutoIrrigationSuspended = false;
+unsigned long Context::autoIrrigationStartTime = 0;
+unsigned int Context::autoIrrigationDuration = 0;
+unsigned long Context::manIrrigationStartTime = 0;
+unsigned int Context::currentMinute = 0;
+unsigned int Context::currentHour = 0;
+unsigned int Context::currentDay = 0;
+float Context::oneHourMaxTemp = -50.0;
+float Context::oneHourMaxHum = 0.0;
+float Context::oneHourMinTemp = 50.0;
+float Context::oneHourMinHum = 100.0;
+float Context::oneHourAvgTemp = 0.0;
+float Context::oneHourAvgHum = 0.0;
+float Context::oneDayMaxTemp= -50.0;
+float Context::oneDayMaxHum = 0.0;
+float Context::oneDayMinTemp = 50.0;
+float Context::oneDayMinHum = 100.0;
+float Context::oneDayAvgTemp = 0.0;
+float Context::oneDayAvgHum = 0.0;
 
-Context::Context() : stateLed(JLed(STATE_LED_PIN)) {
-	/* init led */
-	stateLed.Off();
+Context::Context() {
+}
+
+void Context::initContext() {
 	currentState = State::STAND_BY;
+	changeState(currentState);
 	isManuallyIrrigating = false;
 	isAutoIrrigationSuspended = false;
 	autoIrrigationStartTime = 0;
@@ -47,172 +71,172 @@ void Context::resetDayContext() {
 	oneDayAvgHum = 0.0;
 }
 
-unsigned int Context::getAutoIrrigationDuration() const {
+unsigned int Context::getAutoIrrigationDuration()  {
 	return autoIrrigationDuration;
 }
 
-void Context::setAutoIrrigationDuration(unsigned int autoIrrigationDuration) {
-	this->autoIrrigationDuration = autoIrrigationDuration;
+void Context::setAutoIrrigationDuration(unsigned int duration) {
+	autoIrrigationDuration = duration;
 }
 
-unsigned long Context::getAutoIrrigationStartTime() const {
+unsigned long Context::getAutoIrrigationStartTime()  {
 	return autoIrrigationStartTime;
 }
 
 void Context::setAutoIrrigationStartTime(
-		unsigned long autoIrrigationStartTime) {
-	this->autoIrrigationStartTime = autoIrrigationStartTime;
+		unsigned long startTime) {
+	autoIrrigationStartTime = startTime;
 }
 
-unsigned int Context::getCurrentDay() const {
+unsigned int Context::getCurrentDay()  {
 	return currentDay;
 }
 
-void Context::setCurrentDay(unsigned int currentDay) {
-	this->currentDay = currentDay;
+void Context::setCurrentDay(unsigned int curDay) {
+	currentDay = curDay;
 }
 
-unsigned int Context::getCurrentHour() const {
+unsigned int Context::getCurrentHour()  {
 	return currentHour;
 }
 
-void Context::setCurrentHour(unsigned int currentHour) {
-	this->currentHour = currentHour;
+void Context::setCurrentHour(unsigned int curHour) {
+	currentHour = curHour;
 }
 
-unsigned int Context::getCurrentMinute() const {
+unsigned int Context::getCurrentMinute()  {
 	return currentMinute;
 }
 
-void Context::setCurrentMinute(unsigned int currentMinute) {
-	this->currentMinute = currentMinute;
+void Context::setCurrentMinute(unsigned int curMinute) {
+	currentMinute = curMinute;
 }
 
-bool Context::getIsAutoIrrigationSuspended() const {
+bool Context::getIsAutoIrrigationSuspended()  {
 	return isAutoIrrigationSuspended;
 }
 
-void Context::setIsAutoIrrigationSuspended(bool isAutoIrrigationSuspended) {
-	this->isAutoIrrigationSuspended = isAutoIrrigationSuspended;
+void Context::setIsAutoIrrigationSuspended(bool suspendedFlag) {
+	isAutoIrrigationSuspended = suspendedFlag;
 }
 
-bool Context::getIsManuallyIrrigating() const {
+bool Context::getIsManuallyIrrigating()  {
 	return isManuallyIrrigating;
 }
 
-void Context::setIsManuallyIrrigating(bool isManuallyIrrigating) {
-	this->isManuallyIrrigating = isManuallyIrrigating;
+void Context::setIsManuallyIrrigating(bool manuallyIrrigatingFlag) {
+	isManuallyIrrigating = manuallyIrrigatingFlag;
 }
 
-unsigned long Context::getManIrrigationStartTime() const {
+unsigned long Context::getManIrrigationStartTime()  {
 	return manIrrigationStartTime;
 }
 
-void Context::setManIrrigationStartTime(unsigned long manIrrigationStartTime) {
-	this->manIrrigationStartTime = manIrrigationStartTime;
+void Context::setManIrrigationStartTime(unsigned long startTime) {
+	manIrrigationStartTime = startTime;
 }
 
-float Context::getOneDayAvgHum() const {
+float Context::getOneDayAvgHum()  {
 	return oneDayAvgHum;
 }
 
-void Context::setOneDayAvgHum(float oneDayAvgHum) {
-	this->oneDayAvgHum = oneDayAvgHum;
+void Context::setOneDayAvgHum(float avgHum) {
+	oneDayAvgHum = avgHum;
 }
 
-float Context::getOneDayAvgTemp() const {
+float Context::getOneDayAvgTemp()  {
 	return oneDayAvgTemp;
 }
 
-void Context::setOneDayAvgTemp(float oneDayAvgTemp) {
-	this->oneDayAvgTemp = oneDayAvgTemp;
+void Context::setOneDayAvgTemp(float avgTemp) {
+	oneDayAvgTemp = avgTemp;
 }
 
-float Context::getOneDayMaxHum() const {
+float Context::getOneDayMaxHum()  {
 	return oneDayMaxHum;
 }
 
-void Context::setOneDayMaxHum(float oneDayMaxHum) {
-	this->oneDayMaxHum = oneDayMaxHum;
+void Context::setOneDayMaxHum(float maxHum) {
+	oneDayMaxHum = maxHum;
 }
 
-float Context::getOneDayMaxTemp() const {
+float Context::getOneDayMaxTemp()  {
 	return oneDayMaxTemp;
 }
 
-void Context::setOneDayMaxTemp(float oneDayMaxTemp) {
-	this->oneDayMaxTemp = oneDayMaxTemp;
+void Context::setOneDayMaxTemp(float maxTemp) {
+	oneDayMaxTemp = maxTemp;
 }
 
-float Context::getOneDayMinHum() const {
+float Context::getOneDayMinHum()  {
 	return oneDayMinHum;
 }
 
-void Context::setOneDayMinHum(float oneDayMinHum) {
-	this->oneDayMinHum = oneDayMinHum;
+void Context::setOneDayMinHum(float minHum) {
+	oneDayMinHum = minHum;
 }
 
-float Context::getOneDayMinTemp() const {
+float Context::getOneDayMinTemp()  {
 	return oneDayMinTemp;
 }
 
-void Context::setOneDayMinTemp(float oneDayMinTemp) {
-	this->oneDayMinTemp = oneDayMinTemp;
+void Context::setOneDayMinTemp(float minTemp) {
+	oneDayMinTemp = minTemp;
 }
 
-float Context::getOneHourAvgHum() const {
+float Context::getOneHourAvgHum()  {
 	return oneHourAvgHum;
 }
 
-void Context::setOneHourAvgHum(float oneHourAvgHum) {
-	this->oneHourAvgHum = oneHourAvgHum;
+void Context::setOneHourAvgHum(float avgHum) {
+	oneHourAvgHum = avgHum;
 }
 
-float Context::getOneHourAvgTemp() const {
+float Context::getOneHourAvgTemp()  {
 	return oneHourAvgTemp;
 }
 
-void Context::setOneHourAvgTemp(float oneHourAvgTemp) {
-	this->oneHourAvgTemp = oneHourAvgTemp;
+void Context::setOneHourAvgTemp(float avgTemp) {
+	oneHourAvgTemp = avgTemp;
 }
 
-float Context::getOneHourMaxHum() const {
+float Context::getOneHourMaxHum()  {
 	return oneHourMaxHum;
 }
 
-void Context::setOneHourMaxHum(float oneHourMaxHum) {
-	this->oneHourMaxHum = oneHourMaxHum;
+void Context::setOneHourMaxHum(float maxHum) {
+	oneHourMaxHum = maxHum;
 }
 
-float Context::getOneHourMaxTemp() const {
+float Context::getOneHourMaxTemp()  {
 	return oneHourMaxTemp;
 }
 
-void Context::setOneHourMaxTemp(float oneHourMaxTemp) {
-	this->oneHourMaxTemp = oneHourMaxTemp;
+void Context::setOneHourMaxTemp(float maxTemp) {
+	oneHourMaxTemp = maxTemp;
 }
 
-float Context::getOneHourMinHum() const {
+float Context::getOneHourMinHum()  {
 	return oneHourMinHum;
 }
 
-void Context::setOneHourMinHum(float oneHourMinHum) {
-	this->oneHourMinHum = oneHourMinHum;
+void Context::setOneHourMinHum(float minHum) {
+	oneHourMinHum = minHum;
 }
 
-float Context::getOneHourMinTemp() const {
+float Context::getOneHourMinTemp()  {
 	return oneHourMinTemp;
 }
 
-void Context::setOneHourMinTemp(float oneHourMinTemp) {
-	this->oneHourMinTemp = oneHourMinTemp;
+void Context::setOneHourMinTemp(float minTemp) {
+	oneHourMinTemp = minTemp;
 }
 
-Context::State Context::getCurrentState() const {
+Context::State Context::getCurrentState()  {
 	return currentState;
 }
 
-char* Context::getCurrentStateString() const {
+char* Context::getCurrentStateString()  {
 	char * returnStr = (char *) malloc(sizeof(char) * 10);
 	switch(currentState) {
 		case State::STAND_BY:
@@ -231,8 +255,8 @@ char* Context::getCurrentStateString() const {
 	return returnStr;
 }
 
-void Context::setCurrentState(State currentState) {
-	this->currentState = currentState;
+void Context::setCurrentState(State curState) {
+	currentState = curState;
 }
 
 char* Context::getCurrentContextString(uint32_t ts) {
@@ -276,8 +300,10 @@ void Context::changeState(State toState) {
 			stateLed.Blink(150, 150).Forever();
 			break;
 	}
+	stateLed.Update();
 }
 
 JLed* Context::getStateLed() {
 	return &stateLed;
 }
+

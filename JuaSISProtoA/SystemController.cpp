@@ -6,7 +6,8 @@ SystemController::SystemController() : context(Context()), rtc(RTC()), datalogge
 									   buttonEventsHandler(ButtonEventsHandler(context, actuators, datalogger, rtc, timeEventsHandler)) {};
 
 void SystemController::setup() {
-	// timeEventsHandler.initTimeEvents();
+	context.initContext();
+	timeEventsHandler.initTimeEvents();
 	buttonEventsHandler.initButtons();
 }
 
@@ -23,5 +24,4 @@ void SystemController::stateLedUpdate() {
 void SystemController::recoverContextFromFile() {
 
 }
-
 

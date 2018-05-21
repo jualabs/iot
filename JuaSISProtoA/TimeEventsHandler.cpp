@@ -165,7 +165,7 @@ void TimeEventsHandler::dailyTimeEventHandler() {
 	sprintf(line,"%l,%s,%s,%d", rtc.getTimeStamp(), kcStr, etoStr, context.getAutoIrrigationDuration());
 	datalogger.appendLineInFile("/day.csv", line);
 
-	context.setCurrentDay(currentDay + 1);
+	// context.setCurrentDay(currentDay + 1);
 	context.resetDayContext();
 }
 
