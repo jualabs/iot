@@ -1,12 +1,12 @@
 #include "SystemController.h"
 
-SystemController::SystemController() : context(Context()), rtc(RTC()), datalogger(Datalogger()),
+SystemController::SystemController() : context(Context::getInstance()), rtc(RTC()), datalogger(Datalogger()),
 									   sensors(Sensors()), actuators(Actuators()),
-									   timeEventsHandler(TimeEventsHandler(context, actuators, sensors, datalogger, rtc)),
-									   buttonEventsHandler(ButtonEventsHandler(context, actuators, datalogger, rtc, timeEventsHandler)) {};
+									   timeEventsHandler(TimeEventsHandler(actuators, sensors, datalogger, rtc)),
+									   buttonEventsHandler(ButtonEventsHandler(actuators, datalogger, rtc, timeEventsHandler)) {};
 
 void SystemController::setup() {
-	context.initContext();
+	context->initContext();
 	timeEventsHandler.initTimeEvents();
 	buttonEventsHandler.initButtons();
 }
@@ -18,7 +18,7 @@ void SystemController::loop() {
 }
 
 void SystemController::stateLedUpdate() {
-	context.getStateLed()->Update();
+	context->getStateLed()->Update();
 }
 
 void SystemController::recoverContextFromFile() {

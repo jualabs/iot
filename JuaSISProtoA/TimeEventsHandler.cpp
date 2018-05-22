@@ -21,8 +21,8 @@ void stopAutoIrrigationTimeEventHandlerWrapper() {
 	teh->stopAutoIrrigationTimeEventHandler();
 }
 
-TimeEventsHandler::TimeEventsHandler(Context ctx, Actuators act, Sensors sens, Datalogger dl, RTC rtc) :
-									 context(ctx), actuators(act), sensors(sens), datalogger(dl), rtc(rtc) {
+TimeEventsHandler::TimeEventsHandler(Actuators act, Sensors sens, Datalogger dl, RTC rtc) :
+									 context(Context::getInstance()), actuators(act), sensors(sens), datalogger(dl), rtc(rtc) {
 	tmElements_t tm;
 	// set alarm timer through rtc
 	if (rtc.getTimeElements(&tm) == true) {
@@ -87,24 +87,24 @@ void TimeEventsHandler::minTimeEventHandler() {
 	float currentTmp = sensors.getTemperature();
 	float currentHum = sensors.getHumidity();
 
-	uint8_t currentMinute = context.getCurrentMinute();
+	uint8_t currentMinute = context->getCurrentMinute();
 	// refresh Max and Min values of temperature and humidity
-	if(currentTmp > context.getOneHourMaxTemp()) context.setOneHourMaxTemp(currentTmp);
-	if(currentTmp < context.getOneHourMinTemp()) context.setOneHourMinTemp(currentTmp);
-	if(currentHum > context.getOneHourMaxHum()) context.setOneHourMaxHum(currentHum);
-	if(currentHum < context.getOneHourMinHum()) context.setOneHourMinHum(currentHum);
+	if(currentTmp > context->getOneHourMaxTemp()) context->setOneHourMaxTemp(currentTmp);
+	if(currentTmp < context->getOneHourMinTemp()) context->setOneHourMinTemp(currentTmp);
+	if(currentHum > context->getOneHourMaxHum()) context->setOneHourMaxHum(currentHum);
+	if(currentHum < context->getOneHourMinHum()) context->setOneHourMinHum(currentHum);
 	// refresh temperature and humidity averages
 	if(currentMinute > 0) {
-		float avgTemp = ((context.getOneHourAvgTemp() * ((float) currentMinute / (currentMinute + 1))) + currentTmp) / (currentMinute + 1);
-		context.setOneHourAvgTemp(avgTemp);
-		float avgHum = ((context.getOneHourAvgHum() * ((float) currentMinute / (currentMinute + 1))) + currentHum) / (currentMinute + 1);
-		context.setOneHourAvgTemp(avgHum);
+		float avgTemp = ((context->getOneHourAvgTemp() * ((float) currentMinute / (currentMinute + 1))) + currentTmp) / (currentMinute + 1);
+		context->setOneHourAvgTemp(avgTemp);
+		float avgHum = ((context->getOneHourAvgHum() * ((float) currentMinute / (currentMinute + 1))) + currentHum) / (currentMinute + 1);
+		context->setOneHourAvgTemp(avgHum);
 	}
 	else {
-		context.setOneHourAvgTemp(currentTmp);
-		context.setOneHourAvgHum(currentHum);
+		context->setOneHourAvgTemp(currentTmp);
+		context->setOneHourAvgHum(currentHum);
 	}
-	context.setCurrentMinute(currentMinute + 1);
+	context->setCurrentMinute(currentMinute + 1);
 }
 
 void TimeEventsHandler::hourTimeEventHandler() {
@@ -112,27 +112,27 @@ void TimeEventsHandler::hourTimeEventHandler() {
 #ifdef DEBUG
 	Serial.println("hourTimeEventHandler");
 #endif
-	uint8_t currentHour = context.getCurrentHour();
+	uint8_t currentHour = context->getCurrentHour();
 
-	datalogger.appendLineInFile("/hour.csv", context.getCurrentContextString(rtc.getTimeStamp()));
+	datalogger.appendLineInFile("/hour.csv", context->getCurrentContextString(rtc.getTimeStamp()));
 	// refresh MAX and MIN values of temperature and humidity
-	if(context.getOneHourMaxTemp() > context.getOneDayMaxTemp()) context.setOneDayMaxTemp(context.getOneHourMaxTemp());
-	if(context.getOneHourMinTemp() < context.getOneDayMinTemp()) context.setOneDayMinTemp(context.getOneHourMinTemp());
-	if(context.getOneHourMaxHum() > context.getOneDayMaxHum()) context.setOneDayMaxHum(context.getOneHourMaxHum());
-	if(context.getOneHourMinHum() < context.getOneDayMinHum()) context.setOneDayMinHum(context.getOneHourMinHum());
+	if(context->getOneHourMaxTemp() > context->getOneDayMaxTemp()) context->setOneDayMaxTemp(context->getOneHourMaxTemp());
+	if(context->getOneHourMinTemp() < context->getOneDayMinTemp()) context->setOneDayMinTemp(context->getOneHourMinTemp());
+	if(context->getOneHourMaxHum() > context->getOneDayMaxHum()) context->setOneDayMaxHum(context->getOneHourMaxHum());
+	if(context->getOneHourMinHum() < context->getOneDayMinHum()) context->setOneDayMinHum(context->getOneHourMinHum());
 	// refresh temperature and humidity averages
 	if(currentHour > 0) {
-		float avgTemp = ((context.getOneDayAvgTemp() * ((float) currentHour / (currentHour + 1))) + context.getOneHourAvgTemp()) / (currentHour + 1);
-		context.setOneDayAvgTemp(avgTemp);
-		float avgHum = ((context.getOneDayAvgHum() * ((float) currentHour / (currentHour + 1))) + context.getOneHourAvgHum()) / (currentHour + 1);
-		context.setOneDayAvgHum(avgHum);
+		float avgTemp = ((context->getOneDayAvgTemp() * ((float) currentHour / (currentHour + 1))) + context->getOneHourAvgTemp()) / (currentHour + 1);
+		context->setOneDayAvgTemp(avgTemp);
+		float avgHum = ((context->getOneDayAvgHum() * ((float) currentHour / (currentHour + 1))) + context->getOneHourAvgHum()) / (currentHour + 1);
+		context->setOneDayAvgHum(avgHum);
 	}
 	else {
-		context.setOneDayAvgTemp(context.getOneHourAvgTemp());
-		context.setOneDayAvgHum(context.getOneHourAvgHum());
+		context->setOneDayAvgTemp(context->getOneHourAvgTemp());
+		context->setOneDayAvgHum(context->getOneHourAvgHum());
 	}
-	context.resetHourContext();
-	context.setCurrentHour(currentHour + 1);
+	context->resetHourContext();
+	context->setCurrentHour(currentHour + 1);
 }
 
 void TimeEventsHandler::dailyTimeEventHandler() {
@@ -140,11 +140,11 @@ void TimeEventsHandler::dailyTimeEventHandler() {
 	Serial.println("dailyTimeEventHandler");
 #endif
 
-	uint16_t currentDay = context.getCurrentDay();
-	float avgTemp = context.getOneDayAvgTemp();
-	float avgHum = context.getOneDayAvgHum();
+	uint16_t currentDay = context->getCurrentDay();
+	float avgTemp = context->getOneDayAvgTemp();
+	float avgHum = context->getOneDayAvgHum();
 	// program for auto irrigation
-	context.setIsAutoIrrigationSuspended(false);
+	context->setIsAutoIrrigationSuspended(false);
 	// calculates irrigation parameters
 	float es = 0.6108 * exp((double) (17.27 * avgTemp)/(avgTemp + 237.3));
 	float ea = (es * avgHum) / 100;
@@ -154,7 +154,7 @@ void TimeEventsHandler::dailyTimeEventHandler() {
 	float lb = ll / efc;
 	// calculate irrigation time in seconds (hour . seconds)
 	uint16_t duration = ((lb / ia) * 3600);
-	context.setAutoIrrigationDuration(duration);
+	context->setAutoIrrigationDuration(duration);
 
 	// write current hour values to file
 	char line[120];
@@ -162,21 +162,21 @@ void TimeEventsHandler::dailyTimeEventHandler() {
 	char etoStr[10];
 	dtostrf(kc[currentDay], 9, 3, kcStr);
 	dtostrf(eto, 9, 3, etoStr);
-	sprintf(line,"%l,%s,%s,%d", rtc.getTimeStamp(), kcStr, etoStr, context.getAutoIrrigationDuration());
+	sprintf(line,"%l,%s,%s,%d", rtc.getTimeStamp(), kcStr, etoStr, context->getAutoIrrigationDuration());
 	datalogger.appendLineInFile("/day.csv", line);
 
 	// context.setCurrentDay(currentDay + 1);
-	context.resetDayContext();
+	context->resetDayContext();
 }
 
 void TimeEventsHandler::startAutoIrrigationTimeEventHandler() {
 #ifdef DEBUG
 	Serial.println("startAutoIrrigationTimeEventHandler");
 #endif
-	if(context.getIsAutoIrrigationSuspended() == false) {
+	if(context->getIsAutoIrrigationSuspended() == false) {
 		actuators.setAutoPump(true);
-		Alarm.timerOnce(context.getAutoIrrigationDuration(), stopAutoIrrigationTimeEventHandlerWrapper);
-		context.setAutoIrrigationStartTime(rtc.getTimeStamp());
+		Alarm.timerOnce(context->getAutoIrrigationDuration(), stopAutoIrrigationTimeEventHandlerWrapper);
+		context->setAutoIrrigationStartTime(rtc.getTimeStamp());
 	}
 }
 
@@ -186,7 +186,7 @@ void TimeEventsHandler::stopAutoIrrigationTimeEventHandler() {
 #endif
 	actuators.setAutoPump(false);
 	uint32_t stopTime = rtc.getTimeStamp();
-	uint32_t startTime = context.getAutoIrrigationStartTime();
+	uint32_t startTime = context->getAutoIrrigationStartTime();
 	char line[120];
 	sprintf(line,"%l,%l,%l", startTime, stopTime, (stopTime - startTime));
 	// write current hour values to file

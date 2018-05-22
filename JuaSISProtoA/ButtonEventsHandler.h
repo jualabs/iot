@@ -18,14 +18,14 @@ using namespace ace_button;
 
 class ButtonEventsHandler {
 	public:
-		ButtonEventsHandler(Context ctx, Actuators act, Datalogger dl, RTC rtc, TimeEventsHandler teh);
+		ButtonEventsHandler(Actuators act, Datalogger dl, RTC rtc, TimeEventsHandler teh);
 		// main button handler
 		void mainBtnEventHandler(AceButton* button, uint8_t eventType, uint8_t buttonState);
 		void checkButtonEvents();
 		void initButtons();
 		static void btnHandler(AceButton* button, uint8_t eventType, uint8_t buttonState);
 	private:
-		Context context;
+		Context* context;
 		Actuators actuators;
 		Datalogger datalogger;
 		RTC rtc;

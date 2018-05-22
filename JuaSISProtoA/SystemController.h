@@ -20,7 +20,7 @@ class SystemController {
 
 	private:
 		void recoverContextFromFile();
-		Context context;
+		std::unique_ptr<Context> context;
 		RTC rtc;
 		Datalogger datalogger;
 		Sensors sensors;

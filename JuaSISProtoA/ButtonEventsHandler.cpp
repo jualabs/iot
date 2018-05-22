@@ -10,8 +10,8 @@ void buttonHandlerWrapper(AceButton* button, uint8_t eventType, uint8_t buttonSt
 	beh->mainBtnEventHandler(button, eventType, buttonState);
 }
 
-ButtonEventsHandler::ButtonEventsHandler(Context ctx, Actuators act, Datalogger dl, RTC rtc, TimeEventsHandler teh) :
-										context(ctx), actuators(act), datalogger(dl), rtc(rtc), timeEventsHandler(teh) {}
+ButtonEventsHandler::ButtonEventsHandler(Actuators act, Datalogger dl, RTC rtc, TimeEventsHandler teh) :
+										context(Context::getInstance()), actuators(act), datalogger(dl), rtc(rtc), timeEventsHandler(teh) {}
 
 void ButtonEventsHandler::initButtons() {
 	// configure buttons
@@ -37,7 +37,7 @@ void ButtonEventsHandler::checkButtonEvents() {
 void ButtonEventsHandler::mainBtnEventHandler(AceButton* button, uint8_t eventType, uint8_t buttonState) {
   int btnId = button->getId();
 
-  switch(context.getCurrentState()) {
+  switch(context->getCurrentState()) {
     case Context::State::STAND_BY:
       switch (eventType) {
         case AceButton::kEventReleased:
@@ -60,7 +60,7 @@ void ButtonEventsHandler::mainBtnEventHandler(AceButton* button, uint8_t eventTy
         case AceButton::kEventReleased:
           switch(btnId) {
             case WHITE_BTN_ID:
-              if(context.getIsManuallyIrrigating() == false)
+              if(context->getIsManuallyIrrigating() == false)
                 startManualIrrigationBtnEventHandler();  
               else
                 stopManualIrrigationBtnEventHandler();
@@ -131,7 +131,7 @@ void ButtonEventsHandler::startExperimentBtnEventHandler() {
 	Serial.print("experiment started...\n");
 // #else
 	// change the current system state
-	context.changeState(Context::State::RUNNING);
+	context->changeState(Context::State::RUNNING);
 	// start the time events
 	timeEventsHandler.startTimeEvents();
 // #endif
@@ -141,123 +141,125 @@ void ButtonEventsHandler::enterGetDataStateBtnEventHandler() {
 // #ifdef DEBUG
 	Serial.println("enterGetDataStateBtnEventHandler");
 // #else
-	context.changeState(Context::State::GET_DATA);
+	context->changeState(Context::State::GET_DATA);
 // #endif
 }
 
 void ButtonEventsHandler::startManualIrrigationBtnEventHandler() {
-#ifdef DEBUG
+// #ifdef DEBUG
 	Serial.print("start manual irrigation...\n");
-#else
-	context.setIsManuallyIrrigating(true);
-	context.setManIrrigationStartTime(rtc.getTimeStamp());
+// #else
+	context->setIsManuallyIrrigating(true);
+	context->setManIrrigationStartTime(rtc.getTimeStamp());
 	/* turn manual pump on */
 	actuators.setManPump(true);
-#endif
+// #endif
 }
 
 void ButtonEventsHandler::stopManualIrrigationBtnEventHandler() {
-#ifdef DEBUG
+// #ifdef DEBUG
 	Serial.print("stop manual irrigation...\n");
-#else
-	context.setIsManuallyIrrigating(false);
+// #else
+	context->setIsManuallyIrrigating(false);
 	actuators.setManPump(false);
 
-	uint32_t startTime = context.getManIrrigationStartTime();
+	uint32_t startTime = context->getManIrrigationStartTime();
 	uint32_t stopTime = rtc.getTimeStamp();
 
 	char line[120];
 	sprintf(line,"%l,%l,%l", startTime, stopTime, (stopTime - startTime));
 
 	datalogger.appendLineInFile("/man-irrig.csv", line);
-#endif
+// #endif
 }
 
 void ButtonEventsHandler::suspendAutoIrrigationBtnEventHandler() {
-#ifdef DEBUG
+// #ifdef DEBUG
 	Serial.print("suspend automatic irrigation...\n");
-#else
-	context.setIsAutoIrrigationSuspended(true);
-#endif
+// #else
+	context->setIsAutoIrrigationSuspended(true);
+// #endif
 }
 
 void ButtonEventsHandler::dumpExperimentStateBtnEventHandler() {
-#ifdef DEBUG
+// #ifdef DEBUG
 	Serial.println("dumpExperimentStateBtnEventHandler");
-#else
+// #else
 	Serial.println("********** current experiment state **********");
 	Serial.print("state: ");
-	Serial.println(context.getCurrentStateString());
+	Serial.println(context->getCurrentStateString());
 	Serial.print("isManuallyIrrigating: ");
-	Serial.println(context.getIsManuallyIrrigating());
+	Serial.println(context->getIsManuallyIrrigating());
 	Serial.print("isAutoIrrigationSuspended: ");
-	Serial.println(context.getIsAutoIrrigationSuspended());
+	Serial.println(context->getIsAutoIrrigationSuspended());
 	Serial.print("autoIrrigationDuration: ");
-	Serial.println(context.getAutoIrrigationDuration());
+	Serial.println(context->getAutoIrrigationDuration());
 	Serial.println("----------------------------------------------");
 	Serial.print("currentMinute: ");
-	Serial.println(context.getCurrentMinute());
+	Serial.println(context->getCurrentMinute());
 	Serial.print("oneHourMaxTemp: ");
-	Serial.println(context.getOneHourMaxTemp());
+	Serial.println(context->getOneHourMaxTemp());
 	Serial.print("oneHourMaxHum: ");
-	Serial.println(context.getOneHourMaxHum());
+	Serial.println(context->getOneHourMaxHum());
 	Serial.print("oneHourMinTemp: ");
-	Serial.println(context.getOneHourMinTemp());
+	Serial.println(context->getOneHourMinTemp());
 	Serial.print("oneHourMinHum: ");
-	Serial.println(context.getOneHourMinHum());
+	Serial.println(context->getOneHourMinHum());
 	Serial.print("oneHourAvgTemp: ");
-	Serial.println(context.getOneHourAvgTemp());
+	Serial.println(context->getOneHourAvgTemp());
 	Serial.print("oneHourAvgHum: ");
-	Serial.println(context.getOneHourAvgHum());
+	Serial.println(context->getOneHourAvgHum());
 	Serial.println("----------------------------------------------");
 	Serial.print("currentHour: ");
-	Serial.println(context.getCurrentHour());
+	Serial.println(context->getCurrentHour());
 	Serial.print("oneDayMaxTemp: ");
-	Serial.println(context.getOneDayMaxTemp());
+	Serial.println(context->getOneDayMaxTemp());
 	Serial.print("oneDayMaxHum: ");
-	Serial.println(context.getOneDayMaxHum());
+	Serial.println(context->getOneDayMaxHum());
 	Serial.print("oneDayMinTemp: ");
-	Serial.println(context.getOneDayMinTemp());
+	Serial.println(context->getOneDayMinTemp());
 	Serial.print("oneDayMinHum: ");
-	Serial.println(context.getOneDayMinHum());
+	Serial.println(context->getOneDayMinHum());
 	Serial.print("oneDayAvgTemp: ");
-	Serial.println(context.getOneDayAvgTemp());
+	Serial.println(context->getOneDayAvgTemp());
 	Serial.print("oneDayAvgHum: ");
-	Serial.println(context.getOneDayAvgHum());
+	Serial.println(context->getOneDayAvgHum());
 	Serial.println("----------------------------------------------");
 	Serial.print("currentDay: ");
-	Serial.println(context.getCurrentDay());
+	Serial.println(context->getCurrentDay());
 	Serial.println("**********************************************");
-#endif
+// #endif
 }
 
 void ButtonEventsHandler::stopExperimentBtnEventHandler() {
-#ifdef DEBUG
+// #ifdef DEBUG
 	Serial.print("experiment stoped...\n");
-#else
+// #else
 	// change the current system state
-	context.changeState(Context::State::STAND_BY);
+	context->changeState(Context::State::STAND_BY);
 	// stop the time events
 	timeEventsHandler.stopTimeEvents();
-#endif
+//#endif
 }
 
 void ButtonEventsHandler::dumpFilesBtnEventHandler() {
-#ifdef DEBUG
+//#ifdef DEBUG
 	Serial.println("dumpFilesBtnEventHandler");
-#else
+//#else
+	context->changeState(Context::State::STAND_BY);
 	datalogger.dumpFiles();
-#endif
+// #endif
 }
 
 void ButtonEventsHandler::eraseFilesBtnEventHandler() {
-#ifdef DEBUG
+//#ifdef DEBUG
   Serial.println("eraseFilesBtnEventHandler");
-#endif  
+//#endif
+  context->changeState(Context::State::STAND_BY);
 }
 
 void ButtonEventsHandler::dumpErrorLogBtnEventHandler() {
 #ifdef DEBUG
   Serial.println("dumpErrorLogBtnEventHandler");
-#endif   
+#endif
 }

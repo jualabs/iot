@@ -1,8 +1,6 @@
 #include "Datalogger.h"
 
 Datalogger::Datalogger() {
-  // configure serial
-  Serial.begin(9600);
   // mount file system  
   SPIFFS.begin();
   loadFiles();

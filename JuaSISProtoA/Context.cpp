@@ -1,32 +1,22 @@
 #include "Context.h"
 
-JLed Context::stateLed = JLed(STATE_LED_PIN).Off();
-Context::State Context::currentState = State::STAND_BY;
-bool Context::isManuallyIrrigating = false;
-bool Context::isAutoIrrigationSuspended = false;
-unsigned long Context::autoIrrigationStartTime = 0;
-unsigned int Context::autoIrrigationDuration = 0;
-unsigned long Context::manIrrigationStartTime = 0;
-unsigned int Context::currentMinute = 0;
-unsigned int Context::currentHour = 0;
-unsigned int Context::currentDay = 0;
-float Context::oneHourMaxTemp = -50.0;
-float Context::oneHourMaxHum = 0.0;
-float Context::oneHourMinTemp = 50.0;
-float Context::oneHourMinHum = 100.0;
-float Context::oneHourAvgTemp = 0.0;
-float Context::oneHourAvgHum = 0.0;
-float Context::oneDayMaxTemp= -50.0;
-float Context::oneDayMaxHum = 0.0;
-float Context::oneDayMinTemp = 50.0;
-float Context::oneDayMinHum = 100.0;
-float Context::oneDayAvgTemp = 0.0;
-float Context::oneDayAvgHum = 0.0;
+// global static pointer used to ensure a single instance of the class.
+Context* Context::m_pInstance = nullptr;
 
-Context::Context() {
+/** This function is called to create an instance of the class.
+    Calling the constructor publicly is not allowed. The constructor
+    is private and is only called by this getInstance() function.
+*/
+
+Context* Context::getInstance() {
+   if (!m_pInstance)   // Only allow one instance of class to be generated.
+      m_pInstance = new Context();
+
+   return m_pInstance;
 }
 
-void Context::initContext() {
+Context::Context() : stateLed(JLed(STATE_LED_PIN)) {
+	stateLed.Off();
 	currentState = State::STAND_BY;
 	changeState(currentState);
 	isManuallyIrrigating = false;
@@ -49,6 +39,9 @@ void Context::initContext() {
 	oneDayMinHum = 100.0;
 	oneDayAvgTemp = 0.0;
 	oneDayAvgHum = 0.0;
+}
+
+void Context::initContext() {
 }
 
 void Context::resetHourContext() {

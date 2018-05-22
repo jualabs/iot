@@ -16,7 +16,7 @@ class SystemController;
 
 class TimeEventsHandler {
 	public:
-		TimeEventsHandler(Context ctx, Actuators act, Sensors sens, Datalogger dl, RTC rtc);
+		TimeEventsHandler(Actuators act, Sensors sens, Datalogger dl, RTC rtc);
 		void initTimeEvents();
 		void checkTimeEvents();
 		void startTimeEvents();
@@ -29,7 +29,7 @@ class TimeEventsHandler {
 		void startAutoIrrigationTimeEventHandler();
 		void stopAutoIrrigationTimeEventHandler();
 	private:
-		Context context;
+		Context* context;
 		Actuators actuators;
 		Sensors sensors;
 		Datalogger datalogger;
