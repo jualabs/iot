@@ -6,10 +6,14 @@
 
 class RTC {
 	public:
-		RTC();
+		static RTC* getInstance();
 		uint32_t getTimeStamp();
 		bool getTimeElements(tmElements_t* tm);
 	private:
+		RTC();  // private so that it can  not be called
+	    RTC(const RTC&) = delete;
+	    RTC& operator=(const RTC&) = delete;
+		static RTC* pInstance;
 		DS1302RTC rtc;
 };
 

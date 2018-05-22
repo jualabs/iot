@@ -11,10 +11,14 @@
 
 class Sensors {
 	public:
-		Sensors();
+		static Sensors* getInstance();
 		float getTemperature();
 		float getHumidity();
 	private:
+		Sensors();  // private so that it can  not be called
+		Sensors(const Sensors&) = delete;
+		Sensors& operator=(const Sensors&) = delete;
+		static Sensors* pInstance;
 		DHT dht;
 };
 

@@ -10,8 +10,18 @@ void buttonHandlerWrapper(AceButton* button, uint8_t eventType, uint8_t buttonSt
 	beh->mainBtnEventHandler(button, eventType, buttonState);
 }
 
-ButtonEventsHandler::ButtonEventsHandler(Actuators act, Datalogger dl, RTC rtc, TimeEventsHandler teh) :
-										context(Context::getInstance()), actuators(act), datalogger(dl), rtc(rtc), timeEventsHandler(teh) {}
+ButtonEventsHandler* ButtonEventsHandler::pInstance = nullptr;
+
+ButtonEventsHandler* ButtonEventsHandler::getInstance() {
+   if (!pInstance)
+      pInstance = new ButtonEventsHandler();
+
+   return pInstance;
+}
+
+ButtonEventsHandler::ButtonEventsHandler() :
+										context(Context::getInstance()), actuators(Actuators::getInstance()), datalogger(Datalogger::getInstance()),
+										rtc(RTC::getInstance()), timeEventsHandler(TimeEventsHandler::getInstance()) {}
 
 void ButtonEventsHandler::initButtons() {
 	// configure buttons
@@ -133,7 +143,7 @@ void ButtonEventsHandler::startExperimentBtnEventHandler() {
 	// change the current system state
 	context->changeState(Context::State::RUNNING);
 	// start the time events
-	timeEventsHandler.startTimeEvents();
+	timeEventsHandler->startTimeEvents();
 // #endif
 }
 
@@ -150,9 +160,9 @@ void ButtonEventsHandler::startManualIrrigationBtnEventHandler() {
 	Serial.print("start manual irrigation...\n");
 // #else
 	context->setIsManuallyIrrigating(true);
-	context->setManIrrigationStartTime(rtc.getTimeStamp());
+	context->setManIrrigationStartTime(rtc->getTimeStamp());
 	/* turn manual pump on */
-	actuators.setManPump(true);
+	actuators->setManPump(true);
 // #endif
 }
 
@@ -161,15 +171,15 @@ void ButtonEventsHandler::stopManualIrrigationBtnEventHandler() {
 	Serial.print("stop manual irrigation...\n");
 // #else
 	context->setIsManuallyIrrigating(false);
-	actuators.setManPump(false);
+	actuators->setManPump(false);
 
 	uint32_t startTime = context->getManIrrigationStartTime();
-	uint32_t stopTime = rtc.getTimeStamp();
+	uint32_t stopTime = rtc->getTimeStamp();
 
 	char line[120];
 	sprintf(line,"%l,%l,%l", startTime, stopTime, (stopTime - startTime));
 
-	datalogger.appendLineInFile("/man-irrig.csv", line);
+	datalogger->appendLineInFile("/man-irrig.csv", line);
 // #endif
 }
 
@@ -238,7 +248,7 @@ void ButtonEventsHandler::stopExperimentBtnEventHandler() {
 	// change the current system state
 	context->changeState(Context::State::STAND_BY);
 	// stop the time events
-	timeEventsHandler.stopTimeEvents();
+	timeEventsHandler->stopTimeEvents();
 //#endif
 }
 
@@ -247,7 +257,7 @@ void ButtonEventsHandler::dumpFilesBtnEventHandler() {
 	Serial.println("dumpFilesBtnEventHandler");
 //#else
 	context->changeState(Context::State::STAND_BY);
-	datalogger.dumpFiles();
+	datalogger->dumpFiles();
 // #endif
 }
 

@@ -16,11 +16,15 @@ static constexpr char csv_files_headers[NUM_CSV_FILES][80] = {"ts,tmp_min,tmp_ma
 
 class Datalogger {
 	public:
-    	Datalogger();
+		static Datalogger* getInstance();
     	void logError(char* errorStr);
     	void appendLineInFile(char* filename, char* line);
     	void dumpFiles();
 	private:
+    	Datalogger();  // private so that it can  not be called
+    	Datalogger(const Datalogger&) = delete;
+    	Datalogger& operator=(const Datalogger&) = delete;
+		static Datalogger* pInstance;
     	void loadFiles();
 };
 

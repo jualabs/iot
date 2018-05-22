@@ -18,18 +18,22 @@ using namespace ace_button;
 
 class ButtonEventsHandler {
 	public:
-		ButtonEventsHandler(Actuators act, Datalogger dl, RTC rtc, TimeEventsHandler teh);
+		static ButtonEventsHandler* getInstance();
 		// main button handler
 		void mainBtnEventHandler(AceButton* button, uint8_t eventType, uint8_t buttonState);
 		void checkButtonEvents();
 		void initButtons();
 		static void btnHandler(AceButton* button, uint8_t eventType, uint8_t buttonState);
 	private:
+		ButtonEventsHandler();  // private so that it can  not be called
+		ButtonEventsHandler(const RTC&) = delete;
+		ButtonEventsHandler& operator=(const ButtonEventsHandler&) = delete;
+		static ButtonEventsHandler* pInstance;
 		Context* context;
-		Actuators actuators;
-		Datalogger datalogger;
-		RTC rtc;
-		TimeEventsHandler timeEventsHandler;
+		RTC* rtc;
+		Actuators* actuators;
+		Datalogger* datalogger;
+		TimeEventsHandler* timeEventsHandler;
 		// derivated handlers
 		void startExperimentBtnEventHandler();
 		void enterGetDataStateBtnEventHandler();

@@ -20,13 +20,13 @@ class SystemController {
 
 	private:
 		void recoverContextFromFile();
-		std::unique_ptr<Context> context;
-		RTC rtc;
-		Datalogger datalogger;
-		Sensors sensors;
-		Actuators actuators;
-		TimeEventsHandler timeEventsHandler;
-		ButtonEventsHandler buttonEventsHandler;
+		Context* context;
+		RTC* rtc;
+		Datalogger* datalogger;
+		Sensors* sensors;
+		Actuators* actuators;
+		TimeEventsHandler* timeEventsHandler;
+		ButtonEventsHandler* buttonEventsHandler;
 };
 
 #endif

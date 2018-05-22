@@ -10,10 +10,14 @@
 
 class Actuators {
 	public:
-		Actuators();
+		static Actuators* getInstance();
 		void setManPump(bool state);
 		void setAutoPump(bool state);
 	private:
+		Actuators();  // private so that it can  not be called
+		Actuators(const Actuators&) = delete;
+		Actuators& operator=(const Actuators&) = delete;
+		static Actuators* pInstance;
 
 };
 

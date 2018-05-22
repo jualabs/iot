@@ -16,7 +16,7 @@ class SystemController;
 
 class TimeEventsHandler {
 	public:
-		TimeEventsHandler(Actuators act, Sensors sens, Datalogger dl, RTC rtc);
+		static TimeEventsHandler* getInstance();
 		void initTimeEvents();
 		void checkTimeEvents();
 		void startTimeEvents();
@@ -29,11 +29,15 @@ class TimeEventsHandler {
 		void startAutoIrrigationTimeEventHandler();
 		void stopAutoIrrigationTimeEventHandler();
 	private:
+		TimeEventsHandler();  // private so that it can  not be called
+		TimeEventsHandler(const TimeEventsHandler&) = delete;
+		TimeEventsHandler& operator=(const TimeEventsHandler&) = delete;
+		static TimeEventsHandler* pInstance;
 		Context* context;
-		Actuators actuators;
-		Sensors sensors;
-		Datalogger datalogger;
-		RTC rtc;
+		RTC* rtc;
+		Actuators* actuators;
+		Sensors* sensors;
+		Datalogger* datalogger;
 		enum class ALARM_IDS {MIN_EVENT, HOUR_EVENT, DAILY_EVENT, START_IRRIGATION_EVENT, SIZE};
 		AlarmId alarmIds[(uint8_t) ALARM_IDS::SIZE];
 };
