@@ -1,20 +1,27 @@
 #include "SystemController.h"
 
-SystemController::SystemController() : context(Context::getInstance()), rtc(RTC::getInstance()), datalogger(Datalogger::getInstance()),
+SystemController::SystemController() : context(Context::getInstance()), rtc(DS1302RTC(D0, D2, D1)), datalogger(Datalogger::getInstance()),
 									   sensors(Sensors::getInstance()), actuators(Actuators::getInstance()),
 									   timeEventsHandler(TimeEventsHandler::getInstance()),
 									   buttonEventsHandler(ButtonEventsHandler::getInstance()) {};
 
 void SystemController::setup() {
-	context->initContext();
-	timeEventsHandler->initTimeEvents();
-	buttonEventsHandler->initButtons();
+	// RTC::getInstance()->verifyRTC();
+	setSyncProvider(rtc.get);
+	// sensors->verifySensors();
+	/* initialize contexts */
+	// context->initContext();
+	/* initialize time events */
+	// timeEventsHandler->initTimeEvents();
+	/* initialize the buttons events */
+	// buttonEventsHandler->initButtons();
 }
 
 void SystemController::loop() {
-	stateLedUpdate();
-	timeEventsHandler->checkTimeEvents();
-	buttonEventsHandler->checkButtonEvents();
+	// stateLedUpdate();
+	// timeEventsHandler->checkTimeEvents();
+	// buttonEventsHandler->checkButtonEvents();
+	Serial.println(now());
 }
 
 void SystemController::stateLedUpdate() {

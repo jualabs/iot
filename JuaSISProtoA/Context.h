@@ -10,6 +10,11 @@
 
 #include <Arduino.h>
 #include <jled.h>
+#include <FS.h>
+#include <Time.h>
+#include <TimeLib.h>
+#include "LogError.h"
+#include "Parameters.h"
 
 #define STATE_LED_PIN D4
 
@@ -19,22 +24,22 @@ class Context {
 		enum class State {STAND_BY, RUNNING, GET_DATA, FAILED};
 		void resetHourContext();
 		void resetDayContext();
-		unsigned int getAutoIrrigationDuration();
-		void setAutoIrrigationDuration(unsigned int duration);
-		unsigned long getAutoIrrigationStartTime();
-		void setAutoIrrigationStartTime(unsigned long startTime);
-		unsigned int getCurrentDay();
-		void setCurrentDay(unsigned int curDay);
-		unsigned int getCurrentHour();
-		void setCurrentHour(unsigned int curHour);
-		unsigned int getCurrentMinute();
-		void setCurrentMinute(unsigned int curMinute);
+		uint16_t getAutoIrrigationDuration();
+		void setAutoIrrigationDuration(uint16_t duration);
+		uint32_t getAutoIrrigationStartTime();
+		void setAutoIrrigationStartTime(uint32_t startTime);
+		uint16_t getCurrentDay();
+		void setCurrentDay(uint16_t curDay);
+		uint8_t getCurrentHour();
+		void setCurrentHour(uint8_t curHour);
+		uint8_t getCurrentMinute();
+		void setCurrentMinute(uint8_t curMinute);
 		bool getIsAutoIrrigationSuspended();
 		void setIsAutoIrrigationSuspended(bool suspendedFlag);
 		bool getIsManuallyIrrigating();
 		void setIsManuallyIrrigating(bool manuallyIrrigatingFlag);
-		unsigned long getManIrrigationStartTime();
-		void setManIrrigationStartTime(unsigned long startTime);
+		uint32_t getManIrrigationStartTime();
+		void setManIrrigationStartTime(uint32_t startTime);
 		float getOneDayAvgHum();
 		void setOneDayAvgHum(float avgHum);
 		float getOneDayAvgTemp();
@@ -70,29 +75,55 @@ class Context {
 		Context();  // private so that it can  not be called
 	    Context(const Context&) = delete;
 	    Context& operator=(const Context&) = delete;
-		static Context* m_pInstance;
+		static Context* pInstance;
 		JLed stateLed;
 		State currentState;
+		time_t lastContextUpdateTS;
 		bool isManuallyIrrigating;
 		bool isAutoIrrigationSuspended;
-		unsigned long autoIrrigationStartTime;
-		unsigned int autoIrrigationDuration;
-		unsigned long manIrrigationStartTime;
-		unsigned int currentMinute;
-		unsigned int currentHour;
-		unsigned int currentDay;
-		float   oneHourMaxTemp;
-		float   oneHourMaxHum;
-		float   oneHourMinTemp;
-		float   oneHourMinHum;
-		float   oneHourAvgTemp;
-		float   oneHourAvgHum;
-		float   oneDayMaxTemp;
-		float   oneDayMaxHum;
-		float   oneDayMinTemp;
-		float   oneDayMinHum;
-		float   oneDayAvgTemp;
-		float   oneDayAvgHum;
+		uint32_t autoIrrigationStartTime;
+		uint16_t autoIrrigationDuration;
+		uint32_t manIrrigationStartTime;
+		uint8_t currentMinute;
+		uint8_t currentHour;
+		uint16_t currentDay;
+		float oneHourMaxTemp;
+		float oneHourMaxHum;
+		float oneHourMinTemp;
+		float oneHourMinHum;
+		float oneHourAvgTemp;
+		float oneHourAvgHum;
+		float oneDayMaxTemp;
+		float oneDayMaxHum;
+		float oneDayMinTemp;
+		float oneDayMinHum;
+		float oneDayAvgTemp;
+		float oneDayAvgHum;
+		struct ContextRecover {
+			State currentState;
+			time_t lastContextUpdateTS;
+			bool isManuallyIrrigating;
+			bool isAutoIrrigationSuspended;
+			uint32_t autoIrrigationStartTime;
+			uint16_t autoIrrigationDuration;
+			uint32_t manIrrigationStartTime;
+			uint8_t currentMinute;
+			uint8_t currentHour;
+			uint16_t currentDay;
+			float oneHourMaxTemp;
+			float oneHourMaxHum;
+			float oneHourMinTemp;
+			float oneHourMinHum;
+			float oneHourAvgTemp;
+			float oneHourAvgHum;
+			float oneDayMaxTemp;
+			float oneDayMaxHum;
+			float oneDayMinTemp;
+			float oneDayMinHum;
+			float oneDayAvgTemp;
+			float oneDayAvgHum;
+		};
+		void buildContextRecover(uint8_t *src, struct ContextRecover *ctxRecover);
 };
 
 #endif /* __CONTEXT_H___ */

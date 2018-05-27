@@ -3,13 +3,15 @@
 
 // led library
 #include <Arduino.h>
+#include <Time.h>
+#include <TimeLib.h>
 #include "Context.h"
-#include "RTC.h"
 #include "Datalogger.h"
 #include "Sensors.h"
 #include "Actuators.h"
 #include "TimeEventsHandler.h"
 #include "ButtonEventsHandler.h"
+#include "DS1302RTC.h"
 
 class SystemController {
 	public:
@@ -21,12 +23,12 @@ class SystemController {
 	private:
 		void recoverContextFromFile();
 		Context* context;
-		RTC* rtc;
 		Datalogger* datalogger;
 		Sensors* sensors;
 		Actuators* actuators;
 		TimeEventsHandler* timeEventsHandler;
 		ButtonEventsHandler* buttonEventsHandler;
+		DS1302RTC rtc;
 };
 
 #endif

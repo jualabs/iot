@@ -4,6 +4,8 @@
 #include <Arduino.h>
 #include <FS.h>
 #include <string.h>
+#include <Time.h>
+#include <TimeLib.h>
 
 static const unsigned int NUM_JSON_FILES = 4;
 static const unsigned int NUM_CSV_FILES = 4;
@@ -17,7 +19,7 @@ static constexpr char csv_files_headers[NUM_CSV_FILES][80] = {"ts,tmp_min,tmp_ma
 class Datalogger {
 	public:
 		static Datalogger* getInstance();
-    	void logError(char* errorStr);
+		void formatFS();
     	void appendLineInFile(char* filename, char* line);
     	void dumpFiles();
 	private:

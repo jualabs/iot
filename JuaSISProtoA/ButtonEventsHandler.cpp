@@ -20,8 +20,8 @@ ButtonEventsHandler* ButtonEventsHandler::getInstance() {
 }
 
 ButtonEventsHandler::ButtonEventsHandler() :
-										context(Context::getInstance()), actuators(Actuators::getInstance()), datalogger(Datalogger::getInstance()),
-										rtc(RTC::getInstance()), timeEventsHandler(TimeEventsHandler::getInstance()) {}
+										context(Context::getInstance()), actuators(Actuators::getInstance()),
+										datalogger(Datalogger::getInstance()), timeEventsHandler(TimeEventsHandler::getInstance()) {}
 
 void ButtonEventsHandler::initButtons() {
 	// configure buttons
@@ -160,7 +160,7 @@ void ButtonEventsHandler::startManualIrrigationBtnEventHandler() {
 	Serial.print("start manual irrigation...\n");
 // #else
 	context->setIsManuallyIrrigating(true);
-	context->setManIrrigationStartTime(rtc->getTimeStamp());
+	context->setManIrrigationStartTime(now());
 	/* turn manual pump on */
 	actuators->setManPump(true);
 // #endif
@@ -174,7 +174,7 @@ void ButtonEventsHandler::stopManualIrrigationBtnEventHandler() {
 	actuators->setManPump(false);
 
 	uint32_t startTime = context->getManIrrigationStartTime();
-	uint32_t stopTime = rtc->getTimeStamp();
+	uint32_t stopTime = now();
 
 	char line[120];
 	sprintf(line,"%l,%l,%l", startTime, stopTime, (stopTime - startTime));
@@ -266,6 +266,7 @@ void ButtonEventsHandler::eraseFilesBtnEventHandler() {
   Serial.println("eraseFilesBtnEventHandler");
 //#endif
   context->changeState(Context::State::STAND_BY);
+  datalogger->formatFS();
 }
 
 void ButtonEventsHandler::dumpErrorLogBtnEventHandler() {

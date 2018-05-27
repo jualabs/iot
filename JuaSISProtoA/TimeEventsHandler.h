@@ -9,7 +9,6 @@
 #include "Actuators.h"
 #include "Sensors.h"
 #include "Datalogger.h"
-#include "RTC.h"
 #include "Parameters.h"
 
 class SystemController;
@@ -34,7 +33,6 @@ class TimeEventsHandler {
 		TimeEventsHandler& operator=(const TimeEventsHandler&) = delete;
 		static TimeEventsHandler* pInstance;
 		Context* context;
-		RTC* rtc;
 		Actuators* actuators;
 		Sensors* sensors;
 		Datalogger* datalogger;

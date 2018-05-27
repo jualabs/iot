@@ -21,52 +21,42 @@ Datalogger::Datalogger() {
   loadFiles();
 }
 
-void Datalogger::logError(char* errorStr) {
-  }
+void Datalogger::formatFS() {
+	SPIFFS.format();
+}
 
 void Datalogger::loadFiles() {
-  File file;
-  // init csv files
-  for(int i = 0; i < NUM_CSV_FILES; i++) {
-    if(!SPIFFS.exists(csv_files[i])) {
-       file = SPIFFS.open(csv_files[i], "w");
-       // write csv headers
-       if(file) {
-        file.println(csv_files_headers[i]);
-        file.close();
-       }
-       else {
-#ifdef DEBUG
-         Serial.print("ERROR: creating file -> ");
-         Serial.println(csv_files[i]);
-#endif
-       }
+	File file;
+	/* init csv files */
+	for(int i = 0; i < NUM_CSV_FILES; i++) {
+		if(!SPIFFS.exists(csv_files[i])) {
+			file = SPIFFS.open(csv_files[i], "w");
+			/* write csv headers */
+			if(file) {
+				file.println(csv_files_headers[i]);
+				file.close();
+			}
+			else {
+				/* TODO: decide how to notify opening file errors. */
+				Serial.print("ERROR: Creating file ");
+				Serial.println(csv_files[i]);
+			}
+		}
     }
-  }
-  // init json files
-  for(int i = 0; i < NUM_JSON_FILES; i++) {
-    if(!SPIFFS.exists(json_files[i])) {
-       file = SPIFFS.open(json_files[i], "w");
-       if(file) file.close();
-       else {
-#ifdef DEBUG
-         Serial.print("ERROR: creating file -> ");
-         Serial.println(json_files[i]);
-#endif
-       }
-    }
-  }
-  // init error log
-  if(!SPIFFS.exists("/log_error.txt")) {
-       file = SPIFFS.open("/log_error.txt", "w");
-       if(file) file.close();
-       else {
-#ifdef DEBUG
-         Serial.println("ERROR: creating file -> /log_error.txt");
-#endif
-       }
-    }
-
+	/* init json files */
+	for(int i = 0; i < NUM_JSON_FILES; i++) {
+		if(!SPIFFS.exists(json_files[i])) {
+			file = SPIFFS.open(json_files[i], "w");
+			if(file) {
+				file.close();
+			}
+			else {
+				/* TODO: decide how to notify opening file errors. */
+				Serial.print("ERROR: Creating file ");
+				Serial.println(json_files[i]);
+			}
+		}
+	}
 }
 
 void Datalogger::appendLineInFile(char* filename, char* line) {
@@ -79,9 +69,9 @@ void Datalogger::appendLineInFile(char* filename, char* line) {
 		file.close();
 	}
 	else {
-#ifdef DEBUG
-		Serial.println("ERROR: opening '%s'...", filename);
-#endif
+		/* TODO: decide how to notify opening file errors. */
+		Serial.print("ERROR: Opening file ");
+		Serial.println(filename);
 	}
 }
 
@@ -99,10 +89,9 @@ void Datalogger::dumpFiles() {
 			file.close();
 		}
 		else {
-#ifdef DEBUG
-			Serial.print("ERROR: opening file -> ");
+			/* TODO: decide how to notify opening file errors. */
+			Serial.print("ERROR: Opening file ");
 			Serial.println(csv_files[i]);
-#endif
 	    }
 	}
 	// dump json files
@@ -117,10 +106,9 @@ void Datalogger::dumpFiles() {
 			file.close();
 	    }
 	    else {
-#ifdef DEBUG
-	    	Serial.print("ERROR: opening file -> ");
+			/* TODO: decide how to notify opening file errors. */
+			Serial.print("ERROR: Opening file ");
 	    	Serial.println(json_files[i]);
-#endif
 	    }
 	}
 	// dump error log
@@ -132,9 +120,8 @@ void Datalogger::dumpFiles() {
 	    file.close();
 	}
 	else {
-#ifdef DEBUG
-		Serial.print("ERROR: opening file -> ");
+		/* TODO: decide how to notify opening file errors. */
+		Serial.print("ERROR: Opening file ");
 	    Serial.println("/log_error.txt");
-#endif
 	}
 }

@@ -4,10 +4,11 @@
 #include <Arduino.h>
 #include <AceButton.h>
 using namespace ace_button;
+#include <Time.h>
+#include <TimeLib.h>
 #include "Context.h"
 #include "Actuators.h"
 #include "Datalogger.h"
-#include "RTC.h"
 #include "TimeEventsHandler.h"
 
 // buttons definitions
@@ -26,11 +27,10 @@ class ButtonEventsHandler {
 		static void btnHandler(AceButton* button, uint8_t eventType, uint8_t buttonState);
 	private:
 		ButtonEventsHandler();  // private so that it can  not be called
-		ButtonEventsHandler(const RTC&) = delete;
+		ButtonEventsHandler(const ButtonEventsHandler&) = delete;
 		ButtonEventsHandler& operator=(const ButtonEventsHandler&) = delete;
 		static ButtonEventsHandler* pInstance;
 		Context* context;
-		RTC* rtc;
 		Actuators* actuators;
 		Datalogger* datalogger;
 		TimeEventsHandler* timeEventsHandler;

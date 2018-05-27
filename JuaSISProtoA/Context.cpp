@@ -1,7 +1,7 @@
 #include "Context.h"
 
 // global static pointer used to ensure a single instance of the class.
-Context* Context::m_pInstance = nullptr;
+Context* Context::pInstance = nullptr;
 
 /** This function is called to create an instance of the class.
     Calling the constructor publicly is not allowed. The constructor
@@ -9,10 +9,10 @@ Context* Context::m_pInstance = nullptr;
 */
 
 Context* Context::getInstance() {
-   if (!m_pInstance)   // Only allow one instance of class to be generated.
-      m_pInstance = new Context();
+   if (!pInstance)   // Only allow one instance of class to be generated.
+      pInstance = new Context();
 
-   return m_pInstance;
+   return pInstance;
 }
 
 Context::Context() : stateLed(JLed(STATE_LED_PIN)) {
@@ -42,6 +42,108 @@ Context::Context() : stateLed(JLed(STATE_LED_PIN)) {
 }
 
 void Context::initContext() {
+	/* if there is a saved context ... */
+	if(SPIFFS.exists("/context.dat")) {
+		/* loads it to the ContextRecover struct */
+		File file = SPIFFS.open("/context.dat", "rb");
+	    struct ContextRecover ctxRecover;
+	    if (file) {
+	    	uint8_t *buffer = (uint8_t*) malloc(sizeof(struct ContextRecover));
+	    	file.read(buffer, sizeof(struct ContextRecover));
+	    	buildContextRecover(buffer, &ctxRecover);
+	    	free(buffer);
+	    	file.close();
+	    }
+	    else {
+	    	LogError::getInstance()->insertError("ERROR: opening context file!");
+	    }
+	    time_t currentTime = now();
+	    /* verify if it is recovering from an acceptable period */
+	    if((currentTime - ctxRecover.lastContextUpdateTS)/86400 > MAX_RECOVER_DAYS) {
+	    	LogError::getInstance()->insertError("ERROR: Reached MAX_RECOVER_DAYS! Will not recover! Erasing current recover context!");
+	    	SPIFFS.remove("/context.dat");
+	    }
+	    else {
+    		currentState = State::RUNNING;
+    		changeState(currentState);
+	    	/* verify if it is recovering from a more than one day period */
+	    	if((currentTime - ctxRecover.lastContextUpdateTS)/86400 > 0) {
+	    		currentDay = (ctxRecover.currentDay + (currentTime - ctxRecover.lastContextUpdateTS)/86400);
+	    	}
+	    	else {
+				isAutoIrrigationSuspended = ctxRecover.isAutoIrrigationSuspended;
+				autoIrrigationStartTime = ctxRecover.autoIrrigationStartTime;
+				autoIrrigationDuration = ctxRecover.autoIrrigationDuration;
+				manIrrigationStartTime = ctxRecover.manIrrigationStartTime;
+				currentDay = ctxRecover.currentDay;
+				currentHour = ctxRecover.currentHour;
+				currentMinute = ctxRecover.currentMinute;
+				oneDayMaxTemp= ctxRecover.oneDayMaxTemp;
+				oneDayMaxHum = ctxRecover.oneDayMaxHum;
+				oneDayMinTemp = ctxRecover.oneDayMinTemp;
+				oneDayMinHum = ctxRecover.oneDayMinHum;
+				oneDayAvgTemp = ctxRecover.oneDayAvgTemp;
+				oneDayAvgHum = ctxRecover.oneDayAvgHum;
+	    		/* verify if it is recovering from the same hour period */
+	    		if((currentTime - ctxRecover.lastContextUpdateTS)/3600 == 0) {
+					oneHourMaxTemp = ctxRecover.oneDayMaxTemp;
+					oneHourMaxHum = ctxRecover.oneDayMaxTemp;
+					oneHourMinTemp = ctxRecover.oneDayMaxTemp;
+					oneHourMinHum = ctxRecover.oneDayMaxTemp;
+					oneHourAvgTemp = ctxRecover.oneDayMaxTemp;
+					oneHourAvgHum = ctxRecover.oneDayMaxTemp;
+	    		}
+	    	}
+	    }
+	}
+}
+
+void Context::buildContextRecover(uint8_t *src, struct ContextRecover *ctxRecover) {
+    uint16_t i = 0;
+    memcpy(&ctxRecover->currentState, &src[i], sizeof(ctxRecover->currentState));
+    i += sizeof(ctxRecover->currentState);
+    memcpy(&ctxRecover->lastContextUpdateTS, &src[i], sizeof(ctxRecover->lastContextUpdateTS));
+    i += sizeof(ctxRecover->lastContextUpdateTS);
+    memcpy(&ctxRecover->isManuallyIrrigating, &src[i], sizeof(ctxRecover->isManuallyIrrigating));
+    i += sizeof(ctxRecover->isManuallyIrrigating);
+    memcpy(&ctxRecover->isAutoIrrigationSuspended, &src[i], sizeof(ctxRecover->isAutoIrrigationSuspended));
+    i += sizeof(ctxRecover->isAutoIrrigationSuspended);
+    memcpy(&ctxRecover->autoIrrigationStartTime, &src[i], sizeof(ctxRecover->autoIrrigationStartTime));
+    i += sizeof(ctxRecover->autoIrrigationStartTime);
+    memcpy(&ctxRecover->autoIrrigationDuration, &src[i], sizeof(ctxRecover->autoIrrigationDuration));
+    i += sizeof(ctxRecover->autoIrrigationDuration);
+    memcpy(&ctxRecover->manIrrigationStartTime, &src[i], sizeof(ctxRecover->manIrrigationStartTime));
+    i += sizeof(ctxRecover->manIrrigationStartTime);
+    memcpy(&ctxRecover->currentMinute, &src[i], sizeof(ctxRecover->currentMinute));
+    i += sizeof(ctxRecover->currentMinute);
+    memcpy(&ctxRecover->currentHour, &src[i], sizeof(ctxRecover->currentHour));
+    i += sizeof(ctxRecover->currentHour);
+    memcpy(&ctxRecover->currentDay, &src[i], sizeof(ctxRecover->currentDay));
+    i += sizeof(ctxRecover->currentDay);
+    memcpy(&ctxRecover->oneHourMaxTemp, &src[i], sizeof(ctxRecover->oneHourMaxTemp));
+    i += sizeof(ctxRecover->oneHourMaxTemp);
+    memcpy(&ctxRecover->oneHourMaxHum, &src[i], sizeof(ctxRecover->oneHourMaxHum));
+    i += sizeof(ctxRecover->oneHourMaxHum);
+    memcpy(&ctxRecover->oneHourMinTemp, &src[i], sizeof(ctxRecover->oneHourMinTemp));
+    i += sizeof(ctxRecover->oneHourMinTemp);
+    memcpy(&ctxRecover->oneHourMinHum, &src[i], sizeof(ctxRecover->oneHourMinHum));
+    i += sizeof(ctxRecover->oneHourMinHum);
+    memcpy(&ctxRecover->oneHourAvgTemp, &src[i], sizeof(ctxRecover->oneHourAvgTemp));
+    i += sizeof(ctxRecover->oneHourAvgTemp);
+    memcpy(&ctxRecover->oneHourAvgHum, &src[i], sizeof(ctxRecover->oneHourAvgHum));
+    i += sizeof(ctxRecover->oneHourAvgHum);
+    memcpy(&ctxRecover->oneDayMaxTemp, &src[i], sizeof(ctxRecover->oneDayMaxTemp));
+    i += sizeof(ctxRecover->oneDayMaxTemp);
+    memcpy(&ctxRecover->oneDayMaxHum, &src[i], sizeof(ctxRecover->oneDayMaxHum));
+    i += sizeof(ctxRecover->oneDayMaxHum);
+    memcpy(&ctxRecover->oneDayMinTemp, &src[i], sizeof(ctxRecover->oneDayMinTemp));
+    i += sizeof(ctxRecover->oneDayMinTemp);
+    memcpy(&ctxRecover->oneDayMinHum, &src[i], sizeof(ctxRecover->oneDayMinHum));
+    i += sizeof(ctxRecover->oneDayMinHum);
+    memcpy(&ctxRecover->oneDayAvgTemp, &src[i], sizeof(ctxRecover->oneDayAvgTemp));
+    i += sizeof(ctxRecover->oneDayAvgTemp);
+    memcpy(&ctxRecover->oneDayAvgHum, &src[i], sizeof(ctxRecover->oneDayAvgHum));
+    i += sizeof(ctxRecover->oneDayAvgHum);
 }
 
 void Context::resetHourContext() {
@@ -64,44 +166,44 @@ void Context::resetDayContext() {
 	oneDayAvgHum = 0.0;
 }
 
-unsigned int Context::getAutoIrrigationDuration()  {
+uint16_t Context::getAutoIrrigationDuration()  {
 	return autoIrrigationDuration;
 }
 
-void Context::setAutoIrrigationDuration(unsigned int duration) {
+void Context::setAutoIrrigationDuration(uint16_t duration) {
 	autoIrrigationDuration = duration;
 }
 
-unsigned long Context::getAutoIrrigationStartTime()  {
+uint32_t Context::getAutoIrrigationStartTime()  {
 	return autoIrrigationStartTime;
 }
 
 void Context::setAutoIrrigationStartTime(
-		unsigned long startTime) {
+		uint32_t startTime) {
 	autoIrrigationStartTime = startTime;
 }
 
-unsigned int Context::getCurrentDay()  {
+uint16_t Context::getCurrentDay()  {
 	return currentDay;
 }
 
-void Context::setCurrentDay(unsigned int curDay) {
+void Context::setCurrentDay(uint16_t curDay) {
 	currentDay = curDay;
 }
 
-unsigned int Context::getCurrentHour()  {
+uint8_t Context::getCurrentHour()  {
 	return currentHour;
 }
 
-void Context::setCurrentHour(unsigned int curHour) {
+void Context::setCurrentHour(uint8_t curHour) {
 	currentHour = curHour;
 }
 
-unsigned int Context::getCurrentMinute()  {
+uint8_t Context::getCurrentMinute()  {
 	return currentMinute;
 }
 
-void Context::setCurrentMinute(unsigned int curMinute) {
+void Context::setCurrentMinute(uint8_t curMinute) {
 	currentMinute = curMinute;
 }
 
@@ -121,11 +223,11 @@ void Context::setIsManuallyIrrigating(bool manuallyIrrigatingFlag) {
 	isManuallyIrrigating = manuallyIrrigatingFlag;
 }
 
-unsigned long Context::getManIrrigationStartTime()  {
+uint32_t Context::getManIrrigationStartTime()  {
 	return manIrrigationStartTime;
 }
 
-void Context::setManIrrigationStartTime(unsigned long startTime) {
+void Context::setManIrrigationStartTime(uint32_t startTime) {
 	manIrrigationStartTime = startTime;
 }
 

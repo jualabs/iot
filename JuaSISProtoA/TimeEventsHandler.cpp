@@ -31,16 +31,7 @@ TimeEventsHandler* TimeEventsHandler::getInstance() {
 }
 
 TimeEventsHandler::TimeEventsHandler() :
-		context(Context::getInstance()), actuators(Actuators::getInstance()), sensors(Sensors::getInstance()), datalogger(Datalogger::getInstance()), rtc(RTC::getInstance()) {
-	tmElements_t tm;
-	// set alarm timer through rtc
-	if (rtc->getTimeElements(&tm) == true) {
-		setTime(tm.Hour,tm.Minute,tm.Second,tm.Day,tm.Month,tmYearToCalendar(tm.Year));
-	}
-	else {
-		// Serial.println("ERROR: rtc read");
-		// log error
-	}
+		context(Context::getInstance()), actuators(Actuators::getInstance()), sensors(Sensors::getInstance()), datalogger(Datalogger::getInstance()) {
 }
 
 void TimeEventsHandler::initTimeEvents() {
@@ -123,7 +114,7 @@ void TimeEventsHandler::hourTimeEventHandler() {
 #endif
 	uint8_t currentHour = context->getCurrentHour();
 
-	datalogger->appendLineInFile("/hour.csv", context->getCurrentContextString(rtc->getTimeStamp()));
+	datalogger->appendLineInFile("/hour.csv", context->getCurrentContextString(now()));
 	// refresh MAX and MIN values of temperature and humidity
 	if(context->getOneHourMaxTemp() > context->getOneDayMaxTemp()) context->setOneDayMaxTemp(context->getOneHourMaxTemp());
 	if(context->getOneHourMinTemp() < context->getOneDayMinTemp()) context->setOneDayMinTemp(context->getOneHourMinTemp());
@@ -171,7 +162,7 @@ void TimeEventsHandler::dailyTimeEventHandler() {
 	char etoStr[10];
 	dtostrf(kc[currentDay], 9, 3, kcStr);
 	dtostrf(eto, 9, 3, etoStr);
-	sprintf(line,"%l,%s,%s,%d", rtc->getTimeStamp(), kcStr, etoStr, context->getAutoIrrigationDuration());
+	sprintf(line,"%l,%s,%s,%d", now(), kcStr, etoStr, context->getAutoIrrigationDuration());
 	datalogger->appendLineInFile("/day.csv", line);
 
 	// context.setCurrentDay(currentDay + 1);
@@ -185,7 +176,7 @@ void TimeEventsHandler::startAutoIrrigationTimeEventHandler() {
 	if(context->getIsAutoIrrigationSuspended() == false) {
 		actuators->setAutoPump(true);
 		Alarm.timerOnce(context->getAutoIrrigationDuration(), stopAutoIrrigationTimeEventHandlerWrapper);
-		context->setAutoIrrigationStartTime(rtc->getTimeStamp());
+		context->setAutoIrrigationStartTime(now());
 	}
 }
 
@@ -194,7 +185,7 @@ void TimeEventsHandler::stopAutoIrrigationTimeEventHandler() {
 	Serial.println("stopAutoIrrigationTimeEventHandler");
 #endif
 	actuators->setAutoPump(false);
-	uint32_t stopTime = rtc->getTimeStamp();
+	uint32_t stopTime = now();
 	uint32_t startTime = context->getAutoIrrigationStartTime();
 	char line[120];
 	sprintf(line,"%l,%l,%l", startTime, stopTime, (stopTime - startTime));
