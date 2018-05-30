@@ -2,7 +2,7 @@
 
 SystemController::SystemController() : context(Context::getInstance()), rtc(DS1302RTC(D0, D2, D1)), datalogger(Datalogger::getInstance()),
 									   sensors(Sensors::getInstance()), actuators(Actuators::getInstance()),
-									   timeEventsHandler(TimeEventsHandler::getInstance()),
+									   timeEventsHandler(TimeEventsHandler::getInstance()), comm(Communication::getInstance()),
 									   buttonEventsHandler(ButtonEventsHandler::getInstance()) {};
 
 void SystemController::setup() {
@@ -15,6 +15,8 @@ void SystemController::setup() {
 	// timeEventsHandler->initTimeEvents();
 	/* initialize the buttons events */
 	// buttonEventsHandler->initButtons();
+	/* initialize communication */
+	comm->init();
 }
 
 void SystemController::loop() {

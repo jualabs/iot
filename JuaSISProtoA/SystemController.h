@@ -12,6 +12,7 @@
 #include "TimeEventsHandler.h"
 #include "ButtonEventsHandler.h"
 #include "DS1302RTC.h"
+#include "Communication.h"
 
 class SystemController {
 	public:
@@ -29,6 +30,7 @@ class SystemController {
 		TimeEventsHandler* timeEventsHandler;
 		ButtonEventsHandler* buttonEventsHandler;
 		DS1302RTC rtc;
+		Communication *comm;
 };
 
 #endif
