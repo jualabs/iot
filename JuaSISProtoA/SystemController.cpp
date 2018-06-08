@@ -6,31 +6,41 @@ SystemController::SystemController() : context(Context::getInstance()), rtc(DS13
 									   buttonEventsHandler(ButtonEventsHandler::getInstance()) {};
 
 void SystemController::setup() {
-	// RTC::getInstance()->verifyRTC();
-	setSyncProvider(rtc.get);
+	/* initialize communication */
+	// comm->init();
+	setupTime();
 	// sensors->verifySensors();
 	/* initialize contexts */
-	// context->initContext();
+	context->initContext();
 	/* initialize time events */
-	// timeEventsHandler->initTimeEvents();
+	timeEventsHandler->initTimeEvents();
 	/* initialize the buttons events */
-	// buttonEventsHandler->initButtons();
-	/* initialize communication */
-	comm->init();
+	buttonEventsHandler->initButtons();
+
 }
 
 void SystemController::loop() {
-	// stateLedUpdate();
-	// timeEventsHandler->checkTimeEvents();
-	// buttonEventsHandler->checkButtonEvents();
-	Serial.println(now());
+	stateLedUpdate();
+	timeEventsHandler->checkTimeEvents();
+	buttonEventsHandler->checkButtonEvents();
 }
 
 void SystemController::stateLedUpdate() {
 	context->getStateLed()->Update();
 }
 
-void SystemController::recoverContextFromFile() {
-
+void SystemController::setupTime() {
+#ifndef SIMULATION
+	setSyncProvider(rtc.get);
+	if(timeStatus() != timeSet) {
+		Serial.println("Unable to sync with the RTC");
+	}
+	else {
+		Serial.println("RTC has set the system time");
+	}
+#else
+	setTime(23, 59, 0, 31, 12, 2017);
+	timeEventsHandler->printTime();
+#endif
 }
 

@@ -30,5 +30,4 @@ void setup()
 void loop()
 {
 	sc.loop();
-	delay(1000);
 }

@@ -346,6 +346,9 @@ char* Context::getCurrentStateString()  {
 		case State::FAILED:
 			sprintf(returnStr,"FAILED");
 			break;
+		case State::SET_TIME:
+			sprintf(returnStr,"FAILED");
+			break;
 	}
 	return returnStr;
 }
@@ -354,7 +357,7 @@ void Context::setCurrentState(State curState) {
 	currentState = curState;
 }
 
-char* Context::getCurrentContextString(uint32_t ts) {
+char* Context::getCurrentContextString() {
 	char minTmpStr[10];
 	char maxTmpStr[10];
 	char avgTmpStr[10];
@@ -362,17 +365,19 @@ char* Context::getCurrentContextString(uint32_t ts) {
 	char maxHumStr[10];
 	char avgHumStr[10];
 
-	dtostrf(oneHourMinTemp, 9, 2, minTmpStr);
-	dtostrf(oneHourMaxTemp, 9, 2, maxTmpStr);
-	dtostrf(oneHourAvgTemp, 9, 2, avgTmpStr);
+	dtostrf(oneHourMinTemp, 6, 2, minTmpStr);
+	dtostrf(oneHourMaxTemp, 6, 2, maxTmpStr);
+	dtostrf(oneHourAvgTemp, 6, 2, avgTmpStr);
 
-	dtostrf(oneHourMinHum, 9, 2, minHumStr);
-	dtostrf(oneHourMaxHum, 9, 2, maxHumStr);
-	dtostrf(oneHourAvgHum, 9, 2, avgHumStr);
+	dtostrf(oneHourMinHum, 6, 2, minHumStr);
+	dtostrf(oneHourMaxHum, 6, 2, maxHumStr);
+	dtostrf(oneHourAvgHum, 6, 2, avgHumStr);
 
 	char *str = (char *) malloc(sizeof(char) * 100);
-	sprintf(str, "%l,%s,%s,%s,%s,%s,%s", ts, minTmpStr, maxTmpStr, avgTmpStr, minHumStr, maxHumStr, avgHumStr);
-
+	sprintf(str, "%d,%s,%s,%s,%s,%s,%s", now(), minTmpStr, maxTmpStr, avgTmpStr, minHumStr, maxHumStr, avgHumStr);
+#ifdef DEBUG
+	Serial.println(str);
+#endif
 	return str;
 }
 
@@ -393,6 +398,9 @@ void Context::changeState(State toState) {
 			break;
 		case State::FAILED:
 			stateLed.Blink(150, 150).Forever();
+			break;
+		case State::SET_TIME:
+			stateLed.Blink(150, 850).Forever();
 			break;
 	}
 	stateLed.Update();

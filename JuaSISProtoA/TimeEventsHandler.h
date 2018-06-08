@@ -11,6 +11,8 @@
 #include "Datalogger.h"
 #include "Parameters.h"
 
+#define SIMULATION
+
 class SystemController;
 
 class TimeEventsHandler {
@@ -21,12 +23,13 @@ class TimeEventsHandler {
 		void startTimeEvents();
 		void stopTimeEvents();
 		// time events handlers
-		void cfgMinAndHourTimerEventHandler();
+		// void cfgMinAndHourTimerEventHandler();
 		void minTimeEventHandler();
 		void hourTimeEventHandler();
 		void dailyTimeEventHandler();
 		void startAutoIrrigationTimeEventHandler();
 		void stopAutoIrrigationTimeEventHandler();
+		void printTime();
 	private:
 		TimeEventsHandler();  // private so that it can  not be called
 		TimeEventsHandler(const TimeEventsHandler&) = delete;
@@ -36,8 +39,10 @@ class TimeEventsHandler {
 		Actuators* actuators;
 		Sensors* sensors;
 		Datalogger* datalogger;
-		enum class ALARM_IDS {MIN_EVENT, HOUR_EVENT, DAILY_EVENT, START_IRRIGATION_EVENT, SIZE};
-		AlarmId alarmIds[(uint8_t) ALARM_IDS::SIZE];
+		AlarmId minEventAlarmId;
+		AlarmId hourEventAlarmId;
+		AlarmId dailyEventAlarmId;
+		AlarmId startIrrigationEventAlarmId;
 };
 
 #endif

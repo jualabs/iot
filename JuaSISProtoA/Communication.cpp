@@ -3,7 +3,6 @@
 Communication* comm;
 
 void dataCallbackWrapper(uint32_t *client, const char* topic, uint32_t topic_len, const char *data, uint32_t lenght) {
-	comm->dataCallback(client, topic, topic_len, data, lenght);
 }
 
 // global static pointer used to ensure a single instance of the class.
@@ -24,23 +23,7 @@ Communication* Communication::getInstance() {
 Communication::Communication() {
 }
 
-void Communication::dataCallback(uint32_t *client, const char* topic, uint32_t topic_len, const char *data, uint32_t lenght) {
-  char topic_str[topic_len + 1];
-  os_memcpy(topic_str, topic, topic_len);
-  topic_str[topic_len] = '\0';
-
-  char data_str[lenght + 1];
-  os_memcpy(data_str, data, lenght);
-  data_str[lenght] = '\0';
-
-  Serial.print("received topic '");
-  Serial.print(topic_str);
-  Serial.print("' with data '");
-  Serial.print(data_str);
-  Serial.println("'");
-}
-
-void Communication::init() {
+void Communication::initCommunication() {
 #ifdef AP_MODE
 	Serial.print("\n\nconfiguring AP...");
 	WiFi.softAP(ssid, password);
@@ -60,14 +43,8 @@ void Communication::init() {
 	Serial.print("IP address: ");
 	Serial.println(WiFi.localIP());
 #endif
-	/* register the callback */
-	MQTT_server_onData(dataCallbackWrapper);
-	/* start the broker */
-	Serial.println("Starting MQTT broker");
-	MQTT_server_start(mqttPort, maxSubscriptions, maxRetainedTopics);
-	MQTT_local_subscribe((unsigned char *)"#", 0);
 }
 
-void Communication::publish(char *topic, char *msg) {
-	MQTT_local_publish((unsigned char*) topic, (unsigned char*) msg, strlen(msg), 0, 0);
+void Communication::checkCommunication() {
+
 }

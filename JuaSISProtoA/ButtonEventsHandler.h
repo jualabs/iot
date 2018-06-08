@@ -45,6 +45,7 @@ class ButtonEventsHandler {
 		void dumpFilesBtnEventHandler();
 		void eraseFilesBtnEventHandler();
 		void dumpErrorLogBtnEventHandler();
+		void setTimeBtnEventHandler();
 };
 
 #endif

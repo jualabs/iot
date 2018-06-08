@@ -107,7 +107,7 @@ void ButtonEventsHandler::mainBtnEventHandler(AceButton* button, uint8_t eventTy
         case AceButton::kEventLongPressed:
           switch(btnId) {
             case WHITE_BTN_ID:
-              // do nothing
+              setTimeBtnEventHandler();
               break;
             case RED_BTN_ID:
               eraseFilesBtnEventHandler();
@@ -138,7 +138,7 @@ void ButtonEventsHandler::mainBtnEventHandler(AceButton* button, uint8_t eventTy
 
 void ButtonEventsHandler::startExperimentBtnEventHandler() {
 // #ifdef DEBUG
-	Serial.print("experiment started...\n");
+	Serial.println("experiment started...");
 // #else
 	// change the current system state
 	context->changeState(Context::State::RUNNING);
@@ -157,7 +157,7 @@ void ButtonEventsHandler::enterGetDataStateBtnEventHandler() {
 
 void ButtonEventsHandler::startManualIrrigationBtnEventHandler() {
 // #ifdef DEBUG
-	Serial.print("start manual irrigation...\n");
+	Serial.println("start manual irrigation...");
 // #else
 	context->setIsManuallyIrrigating(true);
 	context->setManIrrigationStartTime(now());
@@ -168,7 +168,7 @@ void ButtonEventsHandler::startManualIrrigationBtnEventHandler() {
 
 void ButtonEventsHandler::stopManualIrrigationBtnEventHandler() {
 // #ifdef DEBUG
-	Serial.print("stop manual irrigation...\n");
+	Serial.println("stop manual irrigation...");
 // #else
 	context->setIsManuallyIrrigating(false);
 	actuators->setManPump(false);
@@ -185,7 +185,7 @@ void ButtonEventsHandler::stopManualIrrigationBtnEventHandler() {
 
 void ButtonEventsHandler::suspendAutoIrrigationBtnEventHandler() {
 // #ifdef DEBUG
-	Serial.print("suspend automatic irrigation...\n");
+	Serial.println("suspend automatic irrigation...");
 // #else
 	context->setIsAutoIrrigationSuspended(true);
 // #endif
@@ -243,7 +243,7 @@ void ButtonEventsHandler::dumpExperimentStateBtnEventHandler() {
 
 void ButtonEventsHandler::stopExperimentBtnEventHandler() {
 // #ifdef DEBUG
-	Serial.print("experiment stoped...\n");
+	Serial.println("experiment stoped...");
 // #else
 	// change the current system state
 	context->changeState(Context::State::STAND_BY);
@@ -272,5 +272,12 @@ void ButtonEventsHandler::eraseFilesBtnEventHandler() {
 void ButtonEventsHandler::dumpErrorLogBtnEventHandler() {
 #ifdef DEBUG
   Serial.println("dumpErrorLogBtnEventHandler");
+#endif
+}
+
+void ButtonEventsHandler::setTimeBtnEventHandler() {
+#ifdef DEBUG
+	context->changeState(Context::State::SET_TIME);
+	Serial.println("setTimeBtnEventHandler");
 #endif
 }

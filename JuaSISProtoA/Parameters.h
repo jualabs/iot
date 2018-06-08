@@ -7,8 +7,8 @@
 
 static const uint8_t autoIrrigationStartHour = 7;
 static const uint8_t autoIrrigationStartMinute = 30;
-static const uint8_t dailyDataProcessStartHour = 7;
-static const uint8_t dailyDataProcessStartMinute = 30;
+static const uint8_t dailyDataProcessStartHour = 0;
+static const uint8_t dailyDataProcessStartMinute = 15;
 static const float efc = 0.9;
 static const unsigned int ngp = 1;
 static const float vg = 1.5;

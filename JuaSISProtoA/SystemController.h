@@ -14,6 +14,8 @@
 #include "DS1302RTC.h"
 #include "Communication.h"
 
+#define SIMULATION
+
 class SystemController {
 	public:
 		SystemController();
@@ -22,7 +24,7 @@ class SystemController {
 		void stateLedUpdate();
 
 	private:
-		void recoverContextFromFile();
+		void setupTime();
 		Context* context;
 		Datalogger* datalogger;
 		Sensors* sensors;

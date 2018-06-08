@@ -21,7 +21,7 @@
 class Context {
 	public:
 		static Context* getInstance();
-		enum class State {STAND_BY, RUNNING, GET_DATA, FAILED};
+		enum class State {STAND_BY, RUNNING, GET_DATA, FAILED, SET_TIME};
 		void resetHourContext();
 		void resetDayContext();
 		uint16_t getAutoIrrigationDuration();
@@ -67,7 +67,7 @@ class Context {
 		State getCurrentState();
 		char* getCurrentStateString();
 		void setCurrentState(State currentState);
-		char* getCurrentContextString(uint32_t ts);
+		char* getCurrentContextString();
 		void changeState(State toState);
 		JLed* getStateLed();
 		void initContext();
