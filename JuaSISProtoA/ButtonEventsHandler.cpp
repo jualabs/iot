@@ -177,7 +177,7 @@ void ButtonEventsHandler::stopManualIrrigationBtnEventHandler() {
 	uint32_t stopTime = now();
 
 	char line[120];
-	sprintf(line,"%l,%l,%l", startTime, stopTime, (stopTime - startTime));
+	sprintf(line,"%d,%d,%d", startTime, stopTime, (stopTime - startTime));
 
 	datalogger->appendLineInFile("/man-irrig.csv", line);
 // #endif

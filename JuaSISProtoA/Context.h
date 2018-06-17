@@ -26,6 +26,8 @@ class Context {
 		void resetDayContext();
 		uint16_t getAutoIrrigationDuration();
 		void setAutoIrrigationDuration(uint16_t duration);
+		uint16_t getLastValidAutoIrrigationDuration();
+		void setLastValidAutoIrrigationDuration(uint16_t duration);
 		uint32_t getAutoIrrigationStartTime();
 		void setAutoIrrigationStartTime(uint32_t startTime);
 		uint16_t getCurrentDay();
@@ -83,6 +85,7 @@ class Context {
 		bool isAutoIrrigationSuspended;
 		uint32_t autoIrrigationStartTime;
 		uint16_t autoIrrigationDuration;
+		uint16_t lastValidAutoIrrigationDuration;
 		uint32_t manIrrigationStartTime;
 		uint8_t currentMinute;
 		uint8_t currentHour;
@@ -106,6 +109,7 @@ class Context {
 			bool isAutoIrrigationSuspended;
 			uint32_t autoIrrigationStartTime;
 			uint16_t autoIrrigationDuration;
+			uint16_t lastAutoIrrigationDuration;
 			uint32_t manIrrigationStartTime;
 			uint8_t currentMinute;
 			uint8_t currentHour;

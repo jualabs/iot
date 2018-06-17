@@ -9,6 +9,7 @@
 #include "Actuators.h"
 #include "Sensors.h"
 #include "Datalogger.h"
+#include "LogError.h"
 #include "Parameters.h"
 
 #define SIMULATION
@@ -23,7 +24,6 @@ class TimeEventsHandler {
 		void startTimeEvents();
 		void stopTimeEvents();
 		// time events handlers
-		// void cfgMinAndHourTimerEventHandler();
 		void minTimeEventHandler();
 		void hourTimeEventHandler();
 		void dailyTimeEventHandler();
@@ -39,6 +39,7 @@ class TimeEventsHandler {
 		Actuators* actuators;
 		Sensors* sensors;
 		Datalogger* datalogger;
+		LogError* logError;
 		AlarmId minEventAlarmId;
 		AlarmId hourEventAlarmId;
 		AlarmId dailyEventAlarmId;

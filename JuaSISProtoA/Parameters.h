@@ -7,8 +7,11 @@
 
 static const uint8_t autoIrrigationStartHour = 7;
 static const uint8_t autoIrrigationStartMinute = 30;
-static const uint8_t dailyDataProcessStartHour = 0;
-static const uint8_t dailyDataProcessStartMinute = 15;
+static const float MAX_ACCEPTABLE_HUM = 100.0;
+static const float MIN_ACCEPTABLE_HUM = 9.9;
+static const float MAX_ACCEPTABLE_TMP = 44.0;
+static const float MIN_ACCEPTABLE_TMP = 13.4;
+
 static const float efc = 0.9;
 static const unsigned int ngp = 1;
 static const float vg = 1.5;

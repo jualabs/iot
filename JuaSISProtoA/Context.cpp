@@ -23,6 +23,7 @@ Context::Context() : stateLed(JLed(STATE_LED_PIN)) {
 	isAutoIrrigationSuspended = false;
 	autoIrrigationStartTime = 0;
 	autoIrrigationDuration = 0;
+	lastValidAutoIrrigationDuration = 0;
 	manIrrigationStartTime = 0;
 	currentMinute = 0;
 	currentHour = 0;
@@ -74,6 +75,7 @@ void Context::initContext() {
 				isAutoIrrigationSuspended = ctxRecover.isAutoIrrigationSuspended;
 				autoIrrigationStartTime = ctxRecover.autoIrrigationStartTime;
 				autoIrrigationDuration = ctxRecover.autoIrrigationDuration;
+				lastValidAutoIrrigationDuration = ctxRecover.lastAutoIrrigationDuration;
 				manIrrigationStartTime = ctxRecover.manIrrigationStartTime;
 				currentDay = ctxRecover.currentDay;
 				currentHour = ctxRecover.currentHour;
@@ -112,6 +114,8 @@ void Context::buildContextRecover(uint8_t *src, struct ContextRecover *ctxRecove
     i += sizeof(ctxRecover->autoIrrigationStartTime);
     memcpy(&ctxRecover->autoIrrigationDuration, &src[i], sizeof(ctxRecover->autoIrrigationDuration));
     i += sizeof(ctxRecover->autoIrrigationDuration);
+    memcpy(&ctxRecover->lastAutoIrrigationDuration, &src[i], sizeof(ctxRecover->lastAutoIrrigationDuration));
+    i += sizeof(ctxRecover->lastAutoIrrigationDuration);
     memcpy(&ctxRecover->manIrrigationStartTime, &src[i], sizeof(ctxRecover->manIrrigationStartTime));
     i += sizeof(ctxRecover->manIrrigationStartTime);
     memcpy(&ctxRecover->currentMinute, &src[i], sizeof(ctxRecover->currentMinute));
@@ -173,6 +177,15 @@ uint16_t Context::getAutoIrrigationDuration()  {
 void Context::setAutoIrrigationDuration(uint16_t duration) {
 	autoIrrigationDuration = duration;
 }
+
+uint16_t Context::getLastValidAutoIrrigationDuration()  {
+	return lastValidAutoIrrigationDuration;
+}
+
+void Context::setLastValidAutoIrrigationDuration(uint16_t duration) {
+	lastValidAutoIrrigationDuration = duration;
+}
+
 
 uint32_t Context::getAutoIrrigationStartTime()  {
 	return autoIrrigationStartTime;

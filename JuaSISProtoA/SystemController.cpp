@@ -39,7 +39,7 @@ void SystemController::setupTime() {
 		Serial.println("RTC has set the system time");
 	}
 #else
-	setTime(23, 59, 0, 31, 12, 2017);
+	setTime(22, 59, 0, 31, 12, 2017);
 	timeEventsHandler->printTime();
 #endif
 }
