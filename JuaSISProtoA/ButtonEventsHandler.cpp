@@ -243,11 +243,11 @@ void ButtonEventsHandler::dumpExperimentStateBtnEventHandler() {
 
 void ButtonEventsHandler::stopExperimentBtnEventHandler() {
 // #ifdef DEBUG
-	Serial.println("experiment stoped...");
+	Serial.println("experiment stopped...");
 // #else
-	// change the current system state
-	context->changeState(Context::State::STAND_BY);
-	// stop the time events
+	/* change the current system state */
+	context->changeState(Context::State::STOPPED);
+	/* stop the time events */
 	timeEventsHandler->stopTimeEvents();
 //#endif
 }

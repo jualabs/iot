@@ -17,6 +17,15 @@ void SystemController::setup() {
 	/* initialize the buttons events */
 	buttonEventsHandler->initButtons();
 
+	String str = "";
+	Dir dir = SPIFFS.openDir("/");
+	while (dir.next()) {
+	    str += dir.fileName();
+	    str += " / ";
+	    str += dir.fileSize();
+	    str += "\r\n";
+	}
+	Serial.print(str);
 }
 
 void SystemController::loop() {
@@ -40,6 +49,7 @@ void SystemController::setupTime() {
 	}
 #else
 	setTime(22, 59, 0, 31, 12, 2017);
+	// setTime(12, 59, 0, 9, 2, 2018);
 	timeEventsHandler->printTime();
 #endif
 }

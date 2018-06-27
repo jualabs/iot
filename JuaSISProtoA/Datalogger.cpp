@@ -43,26 +43,12 @@ void Datalogger::loadFiles() {
 			}
 		}
     }
-	/* init json files */
-	for(int i = 0; i < NUM_JSON_FILES; i++) {
-		if(!SPIFFS.exists(json_files[i])) {
-			file = SPIFFS.open(json_files[i], "w");
-			if(file) {
-				file.close();
-			}
-			else {
-				/* TODO: decide how to notify opening file errors. */
-				Serial.print("ERROR: Creating file ");
-				Serial.println(json_files[i]);
-			}
-		}
-	}
 }
 
-void Datalogger::appendLineInFile(char* filename, char* line) {
-	// append text line to a file
+void Datalogger::appendLineInFile(const char* filename, const char* line) {
+	/* append text line to a file */
 	File file;
-	// write csv file
+	/* write file */
 	file = SPIFFS.open(filename, "a");
 	if(file) {
 		file.println(line);
@@ -77,7 +63,7 @@ void Datalogger::appendLineInFile(char* filename, char* line) {
 
 void Datalogger::dumpFiles() {
 	File file;
-	// dump csv files
+	/* dump csv files */
 	for(int i = 0; i < NUM_CSV_FILES; i++) {
 		file = SPIFFS.open(csv_files[i], "r");
 		if(file) {
@@ -94,24 +80,7 @@ void Datalogger::dumpFiles() {
 			Serial.println(csv_files[i]);
 	    }
 	}
-	// dump json files
-	for(int i = 0; i < NUM_JSON_FILES; i++) {
-		file = SPIFFS.open(json_files[i], "r");
-		if(file) {
-			Serial.print("********** ");
-			Serial.print(json_files[i]);
-			Serial.println(" **********");
-			while(file.available())
-				Serial.println(file.readStringUntil('\n'));
-			file.close();
-	    }
-	    else {
-			/* TODO: decide how to notify opening file errors. */
-			Serial.print("ERROR: Opening file ");
-	    	Serial.println(json_files[i]);
-	    }
-	}
-	// dump error log
+	/* dump error log */
 	file = SPIFFS.open("/log_error.txt", "w");
 	if(file) {
 		Serial.println("********** /log_error.txt **********");

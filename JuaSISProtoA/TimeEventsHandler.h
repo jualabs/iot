@@ -14,7 +14,9 @@
 
 #define SIMULATION
 
-class SystemController;
+extern "C" {
+#include "user_interface.h"
+}
 
 class TimeEventsHandler {
 	public:

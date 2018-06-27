@@ -1,8 +1,5 @@
 #include "TimeEventsHandler.h"
 
-void cfgMinAndHourTimerEventHandlerWrapper() {
-	TimeEventsHandler::getInstance()->cfgMinAndHourTimeEventHandler();
-}
 void minTimeEventHandlerWrapper() {
 	TimeEventsHandler::getInstance()->minTimeEventHandler();
 }
@@ -18,7 +15,6 @@ void startAutoIrrigationTimeEventHandlerWrapper() {
 void stopAutoIrrigationTimeEventHandlerWrapper() {
 	TimeEventsHandler::getInstance()->stopAutoIrrigationTimeEventHandler();
 }
-
 
 TimeEventsHandler* TimeEventsHandler::pInstance = nullptr;
 
@@ -49,10 +45,10 @@ void TimeEventsHandler::checkTimeEvents() {
 }
 
 void TimeEventsHandler::startTimeEvents() {
-	// enable alarms
-	// daily irrigation alarm
+	/* enable alarms */
+	/* daily irrigation alarm */
 	Alarm.enable(startIrrigationEventAlarmId);
-	// daily consolidation meteorological data alarm
+	/* daily consolidation meteorological data alarm*/
 	Alarm.enable(dailyEventAlarmId);
 	uint8_t nextHour = (hour() + 1) % 24;
 	uint8_t hourAfterNext = (hour() + 2) % 24;
@@ -71,6 +67,7 @@ void TimeEventsHandler::stopTimeEvents() {
 void TimeEventsHandler::minTimeEventHandler() {
 #ifdef DEBUG
 	/* Serial.println("minTimeEventHandler"); */
+	// printTime();
 #endif
 	/* read sensor data */
 	float currentTmp = sensors->getTemperature();
@@ -85,6 +82,8 @@ void TimeEventsHandler::minTimeEventHandler() {
 		dtostrf(currentTmp, 6, 2, currentTmpStr);
 		sprintf(str, "ts: %d, error: invalid temperature, value: %s", now(), currentTmpStr);
 		logError->insertError(str);
+		free(currentTmpStr);
+		free(str);
 	}
 	else {
 		/* refresh max and min values of temperature */
@@ -102,6 +101,8 @@ void TimeEventsHandler::minTimeEventHandler() {
 		dtostrf(currentHum, 6, 2, currentHumStr);
 		sprintf(str, "ts: %d, error: invalid humidity, value: %s", now(), currentHumStr);
 		logError->insertError(str);
+		free(currentHumStr);
+		free(str);
 	}
 	else {
 		/* refresh max and min values of humidity */
@@ -118,19 +119,20 @@ void TimeEventsHandler::minTimeEventHandler() {
 	if(nextMinute == 0) {
 		eventHour = (eventHour + 1) % 24;
 	}
-	Serial.print(".");
+	/* reprogram next event */
 	minEventAlarmId = Alarm.alarmOnce(eventHour, nextMinute, 10, minTimeEventHandlerWrapper);
+	/* save current context */
+	// context->saveContext();
 #ifdef SIMULATION
-	if(!(eventHour == 23 && nextMinute >= 58)) {
-		adjustTime(60);
-	}
+	adjustTime(60);
 #endif
 }
 
 void TimeEventsHandler::hourTimeEventHandler() {
 
 #ifdef DEBUG
-	Serial.println("\r\nhourTimeEventHandler");
+	// Serial.println("\r\nhourTimeEventHandler");
+	// printTime();
 #endif
 	uint8_t currentHour = context->getCurrentHour();
 
@@ -185,57 +187,73 @@ void TimeEventsHandler::hourTimeEventHandler() {
 	context->setCurrentHour(currentHour + 1);
 	/* set next hour time event */
 	uint8_t nextHour = (hour() + 1) % 24;
+	/* reprogram next event */
 	hourEventAlarmId = Alarm.alarmOnce(nextHour, 0, 20, hourTimeEventHandlerWrapper);
-#ifdef DEBUG
-	printTime();
-#endif
 }
 
 void TimeEventsHandler::dailyTimeEventHandler() {
 #ifdef DEBUG
 	Serial.println("dailyTimeEventHandler");
+	printTime();
+	if(now() > 1517923287) {
+		Serial.println("simulating power failure!");
+		stopTimeEvents();
+	}
 #endif
 	uint16_t currentDay = context->getCurrentDay();
-	uint16_t duration = 0;
-	float avgTemp = context->getOneDayAvgTemp();
-	float avgHum = context->getOneDayAvgHum();
-	// program for auto irrigation
-	context->setIsAutoIrrigationSuspended(false);
-	/* verify temperature and humidity values */
-	if(avgTemp < MIN_ACCEPTABLE_TMP || avgTemp > MAX_ACCEPTABLE_TMP ||
-	   avgHum < MIN_ACCEPTABLE_HUM || avgHum > MAX_ACCEPTABLE_HUM) {
-		duration = context->getLastValidAutoIrrigationDuration();
-		char line[200];
-		sprintf(line,"ts: %d, error: invalid average temperature and/or humidity values, using last valid irrigation duration: %d s", now(), duration);
-		/* log the invalid value */
-		datalogger->appendLineInFile("/day.csv", line);
-		logError->insertError(line);
-
+	/* verifies if it is the last experiment day */
+	if(currentDay >= EXPERIMENT_DURATION) {
+		/* change device state */
+		context->changeState(Context::State::STOPPED);
+		/* stop all time events */
+		stopTimeEvents();
 	}
 	else {
-		/* calculates irrigation parameters */
-		float es = 0.6108 * exp((double) (17.27 * avgTemp)/(avgTemp + 237.3));
-		float ea = (es * avgHum) / 100;
-		float eto = (2.5982 * pow((1 + (avgTemp / 25)), 2) * (1 - (ea/es))) + 0.7972;
-		float etc = eto * kc[currentDay];
-		float ll = etc * 0.1 * sqrt(35);
-		float lb = ll / efc;
-		/* calculate irrigation time in seconds (hour . seconds) */
-		duration = ((lb / ia) * 3600);
-		context->setLastValidAutoIrrigationDuration(duration);
-		/* write current hour values to file */
-		char line[120];
-		char kcStr[10];
-		char etoStr[10];
-		dtostrf(kc[currentDay], 9, 3, kcStr);
-		dtostrf(eto, 9, 3, etoStr);
-		sprintf(line,"%d,%s,%s,%d", now(), kcStr, etoStr, context->getAutoIrrigationDuration());
-		datalogger->appendLineInFile("/day.csv", line);
+		uint16_t duration = 0;
+		float avgTemp = context->getOneDayAvgTemp();
+		float avgHum = context->getOneDayAvgHum();
+		// program for auto irrigation
+		context->setIsAutoIrrigationSuspended(false);
+		/* verify temperature and humidity values */
+		if(avgTemp < MIN_ACCEPTABLE_TMP || avgTemp > MAX_ACCEPTABLE_TMP ||
+		   avgHum < MIN_ACCEPTABLE_HUM || avgHum > MAX_ACCEPTABLE_HUM) {
+			duration = context->getLastValidAutoIrrigationDuration();
+			char line[200];
+			sprintf(line,"ts: %d, error: invalid average temperature and/or humidity values, using last valid irrigation duration: %d s", now(), duration);
+			/* log the invalid value */
+			datalogger->appendLineInFile("/day.csv", line);
+			logError->insertError(line);
+
+		}
+		else {
+			/* calculates irrigation parameters */
+			float es = 0.6108 * exp((double) (17.27 * avgTemp)/(avgTemp + 237.3));
+			float ea = (es * avgHum) / 100;
+			float eto = (2.5982 * pow((1 + (avgTemp / 25)), 2) * (1 - (ea/es))) + 0.7972;
+			float etc = eto * kc[currentDay];
+			float ll = etc * 0.1 * sqrt(35);
+			float lb = ll / efc;
+			/* calculate irrigation time in seconds (hour . seconds) */
+			duration = ((lb / ia) * 3600);
+			context->setLastValidAutoIrrigationDuration(duration);
+			/* write current hour values to file */
+			char line[120];
+			char kcStr[10];
+			char etoStr[10];
+			char tmpAvgStr[10];
+			char humAvgStr[10];
+			dtostrf(kc[currentDay], 6, 3, kcStr);
+			dtostrf(eto, 6, 3, etoStr);
+			dtostrf(avgTemp, 6, 2, tmpAvgStr);
+			dtostrf(avgHum, 6, 2, humAvgStr);
+			sprintf(line,"%d,%s,%s,%s,%s,%d", now(), tmpAvgStr, humAvgStr, kcStr, etoStr, duration);
+			datalogger->appendLineInFile("/day.csv", line);
+		}
+		context->setAutoIrrigationDuration(duration);
+		context->setCurrentDay(currentDay + 1);
+		context->resetDayContext();
+		context->saveContext();
 	}
-	context->setAutoIrrigationDuration(duration);
-	context->setCurrentDay(currentDay + 1);
-	context->resetDayContext();
-	Serial.println("END-> dailyTimeEventHandler");
 }
 
 void TimeEventsHandler::startAutoIrrigationTimeEventHandler() {
@@ -260,20 +278,22 @@ void TimeEventsHandler::stopAutoIrrigationTimeEventHandler() {
 	sprintf(line,"%d,%d,%d", startTime, stopTime, (stopTime - startTime));
 	// write current hour values to file
 	datalogger->appendLineInFile("/aut-irrig.csv", line);
+	// free(line);
 }
 
 void TimeEventsHandler::printTime() {
-	Serial.print(now());
-	Serial.print("|");
+	char time[] = "00:00";
 	Serial.print(day());
 	Serial.write('/');
 	Serial.print(month());
 	Serial.write('/');
 	Serial.print(year());
-	Serial.print("|");
-	Serial.print(hour());
-	Serial.write(':');
-	Serial.print(minute());
+	Serial.print(" | ");
+	sprintf(time, "%02i:%02i", hour(), minute());
+	Serial.print(time);
+	uint32_t free = system_get_free_heap_size();
+	Serial.print(" | available mem: ");
+	Serial.print(free);
 	Serial.println();
 }
 

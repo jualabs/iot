@@ -45,6 +45,9 @@ Context::Context() : stateLed(JLed(STATE_LED_PIN)) {
 void Context::initContext() {
 	/* if there is a saved context ... */
 	if(SPIFFS.exists("/context.dat")) {
+#ifdef DEBUG
+		Serial.println("recovering context...");
+#endif
 		/* loads it to the ContextRecover struct */
 		File file = SPIFFS.open("/context.dat", "rb");
 	    struct ContextRecover ctxRecover;
@@ -65,7 +68,7 @@ void Context::initContext() {
 	    	SPIFFS.remove("/context.dat");
 	    }
 	    else {
-    		currentState = State::RUNNING;
+    		currentState = ctxRecover.currentState;
     		changeState(currentState);
 	    	/* verify if it is recovering from a more than one day period */
 	    	if((currentTime - ctxRecover.lastContextUpdateTS)/86400 > 0) {
@@ -98,6 +101,79 @@ void Context::initContext() {
 	    	}
 	    }
 	}
+}
+
+void Context::saveContext() {
+	Serial.println("saving context...");
+	/* alocates a context binary buffer to be written to the flash memory */
+	uint8_t *buffer = (uint8_t*) malloc(sizeof(struct ContextRecover));
+	/* get current time stamp */
+	lastContextUpdateTS = now();
+	/* move data from strcut to binary buffer */
+    uint16_t i = 0;
+    memcpy(&buffer[i], &currentState, sizeof(State));
+    i += sizeof(State);
+    memcpy(&buffer[i], &lastContextUpdateTS, sizeof(time_t));
+    i += sizeof(time_t);
+    size_t typeSize = sizeof(bool);
+    memcpy(&buffer[i], &isManuallyIrrigating, typeSize);
+    i += typeSize;
+    memcpy(&buffer[i], &isAutoIrrigationSuspended, typeSize);
+    i += typeSize;
+    typeSize = sizeof(uint32_t);
+    memcpy(&buffer[i], &autoIrrigationStartTime, typeSize);
+    i += typeSize;
+    typeSize = sizeof(uint16_t);
+    memcpy(&buffer[i], &autoIrrigationDuration, typeSize);
+    i += typeSize;
+    memcpy(&buffer[i], &lastValidAutoIrrigationDuration, typeSize);
+    i += typeSize;
+    typeSize = sizeof(uint32_t);
+    memcpy(&buffer[i], &manIrrigationStartTime, typeSize);
+    i += typeSize;
+    typeSize = sizeof(uint8_t);
+    memcpy(&buffer[i], &currentMinute, typeSize);
+    i += typeSize;
+    memcpy(&buffer[i], &currentHour, typeSize);
+    i += typeSize;
+    typeSize = sizeof(uint16_t);
+    memcpy(&buffer[i], &currentDay, typeSize);
+    i += typeSize;
+    typeSize = sizeof(float);
+    memcpy(&buffer[i], &oneHourMaxTemp, typeSize);
+    i += typeSize;
+    memcpy(&buffer[i], &oneHourMaxHum, typeSize);
+    i += typeSize;
+    memcpy(&buffer[i], &oneHourMinTemp, typeSize);
+    i += typeSize;
+    memcpy(&buffer[i], &oneHourMinHum, typeSize);
+    i += typeSize;
+    memcpy(&buffer[i], &oneHourAvgTemp, typeSize);
+    i += typeSize;
+    memcpy(&buffer[i], &oneHourAvgHum, typeSize);
+    i += typeSize;
+    memcpy(&buffer[i], &oneDayMaxTemp, typeSize);
+    i += typeSize;
+    memcpy(&buffer[i], &oneDayMaxHum, typeSize);
+    i += typeSize;
+    memcpy(&buffer[i], &oneDayMinTemp, typeSize);
+    i += typeSize;
+    memcpy(&buffer[i], &oneDayMinHum, typeSize);
+    i += typeSize;
+    memcpy(&buffer[i], &oneDayAvgTemp, typeSize);
+    i += typeSize;
+    memcpy(&buffer[i], &oneDayAvgHum, typeSize);
+	/* creates the context file */
+	File file = SPIFFS.open("/context.dat", "wb");
+	/* write context to the file */
+    if (file) {
+    	file.write(buffer, sizeof(struct ContextRecover));
+    	file.close();
+    }
+    else {
+    	LogError::getInstance()->insertError("ERROR: opening context file!");
+    }
+    free(buffer);
 }
 
 void Context::buildContextRecover(uint8_t *src, struct ContextRecover *ctxRecover) {
@@ -344,23 +420,26 @@ Context::State Context::getCurrentState()  {
 	return currentState;
 }
 
-char* Context::getCurrentStateString()  {
-	char * returnStr = (char *) malloc(sizeof(char) * 10);
+char * Context::getCurrentStateString()  {
+	static char returnStr[10];
 	switch(currentState) {
 		case State::STAND_BY:
-			sprintf(returnStr,"STAND_BY");
+			strcpy(returnStr,"STAND_BY");
 			break;
 		case State::RUNNING:
-			sprintf(returnStr,"RUNNING");
+			strcpy(returnStr,"RUNNING");
 			break;
 		case State::GET_DATA:
-			sprintf(returnStr,"GET_DATA");
+			strcpy(returnStr,"GET_DATA");
 			break;
 		case State::FAILED:
-			sprintf(returnStr,"FAILED");
+			strcpy(returnStr,"FAILED");
 			break;
 		case State::SET_TIME:
-			sprintf(returnStr,"FAILED");
+			strcpy(returnStr,"SET_TIME");
+			break;
+		case State::STOPPED:
+			strcpy(returnStr,"STOPPED");
 			break;
 	}
 	return returnStr;
@@ -370,7 +449,7 @@ void Context::setCurrentState(State curState) {
 	currentState = curState;
 }
 
-char* Context::getCurrentContextString() {
+char * Context::getCurrentContextString() {
 	char minTmpStr[10];
 	char maxTmpStr[10];
 	char avgTmpStr[10];
@@ -386,7 +465,7 @@ char* Context::getCurrentContextString() {
 	dtostrf(oneHourMaxHum, 6, 2, maxHumStr);
 	dtostrf(oneHourAvgHum, 6, 2, avgHumStr);
 
-	char *str = (char *) malloc(sizeof(char) * 100);
+	static char str[100];
 	sprintf(str, "%d,%s,%s,%s,%s,%s,%s", now(), minTmpStr, maxTmpStr, avgTmpStr, minHumStr, maxHumStr, avgHumStr);
 #ifdef DEBUG
 	Serial.println(str);
@@ -414,6 +493,9 @@ void Context::changeState(State toState) {
 			break;
 		case State::SET_TIME:
 			stateLed.Blink(150, 850).Forever();
+			break;
+		case State::STOPPED:
+			stateLed.Blink(2000, 2000).Forever();
 			break;
 	}
 	stateLed.Update();
