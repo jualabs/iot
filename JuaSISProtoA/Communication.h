@@ -24,8 +24,8 @@ class Communication {
 		Communication(const Communication&) = delete;
 		Communication& operator=(const Communication&) = delete;
 		static Communication* pInstance;
-		const char *ssid = "siri_cascudo";
-		const char *pass = "B3rl1n3rM@u3r";
+		const char *ssid = "ssid";
+		const char *pass = "pass";
 		const char *ftpUser = "juasis";
 		const char *ftpPass = "juasis";
 		bool enableCommFlag;
