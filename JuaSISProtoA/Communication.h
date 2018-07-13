@@ -5,13 +5,18 @@
 
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
-// #include <BlynkSimpleEsp8266.h>
+/* set #define FTP_DEBUG in ESP8266FtpServer.h to see ftp verbose on serial */
+#include <ESP8266FtpServer.h>
 
 
 class Communication {
 	public:
 		static Communication* getInstance();
-		void initCommunication();
+		enum class CommunicationState {DISCONNECTED, CONNECTING, CONNECTED};
+		void enable();
+		void disable();
+		bool isEnabled();
+		void startFTPServer();
 		void checkCommunication();
 
 	private:
@@ -21,7 +26,12 @@ class Communication {
 		static Communication* pInstance;
 		const char *ssid = "siri_cascudo";
 		const char *pass = "B3rl1n3rM@u3r";
-		const char *auth = "e312ac8c612b427084066af01f4ec6b4";
+		const char *ftpUser = "juasis";
+		const char *ftpPass = "juasis";
+		bool enableCommFlag;
+		CommunicationState commState;
+		FtpServer ftpSrv;
+		uint32_t lastVerificationTS;
 };
 
 #endif

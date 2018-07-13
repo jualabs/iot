@@ -36,10 +36,18 @@ void SystemController::loop() {
 	stateLedUpdate();
 	timeEventsHandler->checkTimeEvents();
 	buttonEventsHandler->checkButtonEvents();
-	// comm->checkCommunication();
+	comm->checkCommunication();
 	/* if entered in SET_TIME state */
 	if(context->getCurrentState() == Context::State::SET_TIME) {
 		setDateTimeFromSerial();
+	}
+	else if(context->getCurrentState() == Context::State::GET_DATA) {
+		if(comm->isEnabled() == false) {
+			comm->enable();
+		}
+	}
+	else {
+		comm->disable();
 	}
 }
 
@@ -94,6 +102,8 @@ void SystemController::setDateTimeFromSerial() {
 				char datetime[] = "YYYY-MM-DD 00:00:00";
 				sprintf(datetime, "%04i-%02i-%02i %02i:%02i:%02i", year(), month(), day(), hour(), minute(), second());
 				Serial.println(datetime);
+				/* try to recover context with new datetime */
+				context->recoverContext();
 			}
 			else
 				Serial.print("ERROR: unable to set date and time!");

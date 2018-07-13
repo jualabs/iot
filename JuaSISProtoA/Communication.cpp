@@ -1,29 +1,5 @@
 #include "Communication.h"
 
-// WidgetTable table;
-
-// BLYNK_ATTACH_WIDGET(table, V1);
-
-int rowIndex = 0;
-
-// Button on V10 adds new items
-/*
-BLYNK_WRITE(V9) {
-  if (param.asInt()) {
-    table.addRow(rowIndex, "Test row", millis() / 1000);
-    table.pickRow(rowIndex);
-    rowIndex++;
-  }
-}
-
-// Button on V11 clears the table
-BLYNK_WRITE(V11) {
-  if (param.asInt()) {
-    table.clear();
-    rowIndex = 0;
-  }
-}
-*/
 
 Communication* comm;
 
@@ -36,37 +12,69 @@ Communication* Communication::pInstance = nullptr;
 /** This function is called to create an instance of the class.
     Calling the constructor publicly is not allowed. The constructor
     is private and is only called by this getInstance() function.
-*/
+ */
 
 Communication* Communication::getInstance() {
-   if (!pInstance)   // Only allow one instance of class to be generated.
-      pInstance = new Communication();
+	if (!pInstance)   // Only allow one instance of class to be generated.
+		pInstance = new Communication();
 
-   return pInstance;
+	return pInstance;
 }
 
-Communication::Communication() {
+Communication::Communication() : ftpSrv() {
+	commState = CommunicationState::DISCONNECTED;
+	enableCommFlag = false;
+	lastVerificationTS = 0;
 }
 
-void Communication::initCommunication() {
-/*
-	Blynk.begin(auth, ssid, pass);
-	  // Setup table event callbacks
-	  table.onOrderChange([](int indexFrom, int indexTo) {
-	    Serial.print("Reordering: ");
-	    Serial.print(indexFrom);
-	    Serial.print(" => ");
-	    Serial.print(indexTo);
-	    Serial.println();
-	  });
-	  table.onSelectChange([](int index, bool selected) {
-	    Serial.print("Item ");
-	    Serial.print(index);
-	    Serial.print(selected ? " marked" : " unmarked");
-	  });
-*/
+void Communication::enable() {
+	enableCommFlag = true;
+}
+
+void Communication::disable() {
+	enableCommFlag = false;
+}
+
+bool Communication::isEnabled() {
+	return enableCommFlag;
 }
 
 void Communication::checkCommunication() {
-//	Blynk.run();
+	switch (commState) {
+	case CommunicationState::DISCONNECTED:
+		if(enableCommFlag == true) {
+			WiFi.begin(ssid, pass);
+			commState = CommunicationState::CONNECTING;
+		}
+		break;
+	case CommunicationState::CONNECTING:
+		if(WiFi.status() != WL_CONNECTED) {
+			if((millis() - lastVerificationTS) > 500) {
+				Serial.print(".");
+				lastVerificationTS = millis();
+			}
+		}
+		else {
+			/* print ip on serial interface */
+			Serial.print("\r\nconnected - ip address: ");
+			Serial.println(WiFi.localIP());
+			/* open file system */
+			if (SPIFFS.begin()) {
+				Serial.println("SPIFFS opened!");
+				/* username, password for ftp. set ports in ESP8266FtpServer.h  (default 21, 50009 for PASV) */
+				ftpSrv.begin(ftpUser, ftpPass);
+				commState = CommunicationState::CONNECTED;
+			}
+		}
+		break;
+	case CommunicationState::CONNECTED:
+		ftpSrv.handleFTP();
+		if(enableCommFlag == false) {
+			Serial.println("\r\ndisconnecting...");
+			WiFi.disconnect(true);
+			commState = CommunicationState::DISCONNECTED;
+		}
+		break;
+	}
+
 }

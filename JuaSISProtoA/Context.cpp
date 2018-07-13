@@ -68,7 +68,7 @@ bool Context::recoverContext() {
 #endif
 				file.close();
 				/* enter fail state */
-				changeState(Context::State::FAILED);
+				changeState(Context::State::SET_TIME);
 			}
 			/* verify if it is recovering from an acceptable time period */
 			else if((currentTime - contextCheckpointTS)/86400 > MAX_RECOVER_DAYS) {
