@@ -72,8 +72,9 @@ class Context {
 		char* getCurrentContextString();
 		void changeState(State toState);
 		JLed* getStateLed();
-		void initContext();
+		bool recoverContext();
 		void saveContext();
+		void printContextSerial();
 	private:
 		Context();  // private so that it can  not be called
 	    Context(const Context&) = delete;
@@ -81,7 +82,6 @@ class Context {
 		static Context* pInstance;
 		JLed stateLed;
 		State currentState;
-		time_t lastContextUpdateTS;
 		bool isManuallyIrrigating;
 		bool isAutoIrrigationSuspended;
 		uint32_t autoIrrigationStartTime;
@@ -103,32 +103,6 @@ class Context {
 		float oneDayMinHum;
 		float oneDayAvgTemp;
 		float oneDayAvgHum;
-		struct ContextRecover {
-			State currentState;
-			time_t lastContextUpdateTS;
-			bool isManuallyIrrigating;
-			bool isAutoIrrigationSuspended;
-			uint32_t autoIrrigationStartTime;
-			uint16_t autoIrrigationDuration;
-			uint16_t lastAutoIrrigationDuration;
-			uint32_t manIrrigationStartTime;
-			uint8_t currentMinute;
-			uint8_t currentHour;
-			uint16_t currentDay;
-			float oneHourMaxTemp;
-			float oneHourMaxHum;
-			float oneHourMinTemp;
-			float oneHourMinHum;
-			float oneHourAvgTemp;
-			float oneHourAvgHum;
-			float oneDayMaxTemp;
-			float oneDayMaxHum;
-			float oneDayMinTemp;
-			float oneDayMinHum;
-			float oneDayAvgTemp;
-			float oneDayAvgHum;
-		};
-		void buildContextRecover(uint8_t *src, struct ContextRecover *ctxRecover);
 };
 
 #endif /* __CONTEXT_H___ */

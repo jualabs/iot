@@ -52,7 +52,7 @@ void LogError::insertError(char* errorMsg) {
 void LogError::dumpErrorLog() {
 	File file;
 	// dump error log
-	file = SPIFFS.open("/log_error.txt", "w");
+	file = SPIFFS.open("/log_error.txt", "r");
 	if(file) {
 		Serial.println("********** /log_error.txt **********");
 	    while(file.available())

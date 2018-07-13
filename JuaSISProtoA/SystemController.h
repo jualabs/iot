@@ -22,6 +22,7 @@ class SystemController {
 		void setup();
 		void loop();
 		void stateLedUpdate();
+		void setDateTimeFromSerial();
 
 	private:
 		void setupTime();

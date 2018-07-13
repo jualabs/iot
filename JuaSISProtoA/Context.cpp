@@ -42,188 +42,130 @@ Context::Context() : stateLed(JLed(STATE_LED_PIN)) {
 	oneDayAvgHum = 0.0;
 }
 
-void Context::initContext() {
+bool Context::recoverContext() {
+	bool isContextRecovered = false;
 	/* if there is a saved context ... */
-	if(SPIFFS.exists("/context.dat")) {
+	if(SPIFFS.exists("/context.txt")) {
 #ifdef DEBUG
 		Serial.println("recovering context...");
 #endif
-		/* loads it to the ContextRecover struct */
-		File file = SPIFFS.open("/context.dat", "rb");
-	    struct ContextRecover ctxRecover;
-	    if (file) {
-	    	uint8_t *buffer = (uint8_t*) malloc(sizeof(struct ContextRecover));
-	    	file.read(buffer, sizeof(struct ContextRecover));
-	    	buildContextRecover(buffer, &ctxRecover);
-	    	free(buffer);
-	    	file.close();
-	    }
+		/* open context file */
+		File file = SPIFFS.open("/context.txt", "r");
+		if (file) {
+			/* get the current time stamp */
+			time_t currentTime = now();
+			/* get from file the last context checkpoint time stamp */
+			time_t contextCheckpointTS = (uint32_t) file.parseInt();
+#ifdef DEBUG
+			Serial.print("last checkpoint ts: ");
+			Serial.println(contextCheckpointTS);
+#endif
+			/* verify if the current time stamp is valid related to the stored context, that is, bigger than */
+			if((currentTime - contextCheckpointTS) < 0) {
+				LogError::getInstance()->insertError("ERROR: current time stamp lower than the last context checkpoint time stamp! Entered in set time mode!");
+#ifdef DEBUG
+				Serial.println("ERROR: current time stamp lower than the last context checkpoint time stamp! Entering set time mode!");
+#endif
+				file.close();
+				/* enter fail state */
+				changeState(Context::State::FAILED);
+			}
+			/* verify if it is recovering from an acceptable time period */
+			else if((currentTime - contextCheckpointTS)/86400 > MAX_RECOVER_DAYS) {
+				LogError::getInstance()->insertError("ERROR: Reached MAX_RECOVER_DAYS! Will not recover! Erasing current recover context!");
+#ifdef DEBUG
+				Serial.println("ERROR: Reached MAX_RECOVER_DAYS! Will not recover! Erasing current recover context!");
+#endif
+				file.close();
+				/* enter on get data state, where the user can download or erase the data to restart the experiment */
+				changeState(Context::State::GET_DATA);
+			}
+			else {
+				currentState = (Context::State) file.parseInt();
+			    changeState(currentState);
+				/* verify if it is recovering from a more than one day period */
+			    if((currentTime - contextCheckpointTS)/86400 > 0) {
+			    	uint16_t checkpointDay = (uint16_t) file.parseInt();
+			    	currentDay = (checkpointDay + (currentTime - contextCheckpointTS)/86400);
+			    }
+			    /* recovering on the same day */
+				else {
+					currentDay = (uint16_t) file.parseInt();
+					currentHour = (uint8_t) file.parseInt();
+					currentMinute = (uint8_t) file.parseInt();
+					isAutoIrrigationSuspended = (bool) file.parseInt();
+					autoIrrigationStartTime = (uint32_t) file.parseInt();
+					autoIrrigationDuration = (uint16_t) file.parseInt();
+					lastValidAutoIrrigationDuration = (uint16_t) file.parseInt();
+					manIrrigationStartTime = (uint32_t) file.parseInt();
+					oneDayMaxTemp = file.parseFloat();
+					oneDayMaxHum = file.parseFloat();
+					oneDayMinTemp = file.parseFloat();
+					oneDayMinHum = file.parseFloat();
+					oneDayAvgTemp = file.parseFloat();
+					oneDayAvgHum = file.parseFloat();
+				    /* recovering from the same day and hour */
+				    if((currentTime - contextCheckpointTS)/3600 == 0) {
+				    	oneHourMaxTemp = file.parseFloat();
+						oneHourMaxHum = file.parseFloat();
+						oneHourMinTemp = file.parseFloat();
+						oneHourMinHum = file.parseFloat();
+						oneHourAvgTemp = file.parseFloat();
+						oneHourAvgHum = file.parseFloat();
+				    }
+				}
+			    isContextRecovered = true;
+#ifdef DEBUG
+			    Serial.println("**** restored context ****");
+			    printContextSerial();
+			    Serial.println("**************************");
+#endif
+			}
+			file.close();
+		}
 	    else {
 	    	LogError::getInstance()->insertError("ERROR: opening context file!");
 	    }
-	    time_t currentTime = now();
-	    /* verify if it is recovering from an acceptable period */
-	    if((currentTime - ctxRecover.lastContextUpdateTS)/86400 > MAX_RECOVER_DAYS) {
-	    	LogError::getInstance()->insertError("ERROR: Reached MAX_RECOVER_DAYS! Will not recover! Erasing current recover context!");
-	    	SPIFFS.remove("/context.dat");
-	    }
-	    else {
-    		currentState = ctxRecover.currentState;
-    		changeState(currentState);
-	    	/* verify if it is recovering from a more than one day period */
-	    	if((currentTime - ctxRecover.lastContextUpdateTS)/86400 > 0) {
-	    		currentDay = (ctxRecover.currentDay + (currentTime - ctxRecover.lastContextUpdateTS)/86400);
-	    	}
-	    	else {
-				isAutoIrrigationSuspended = ctxRecover.isAutoIrrigationSuspended;
-				autoIrrigationStartTime = ctxRecover.autoIrrigationStartTime;
-				autoIrrigationDuration = ctxRecover.autoIrrigationDuration;
-				lastValidAutoIrrigationDuration = ctxRecover.lastAutoIrrigationDuration;
-				manIrrigationStartTime = ctxRecover.manIrrigationStartTime;
-				currentDay = ctxRecover.currentDay;
-				currentHour = ctxRecover.currentHour;
-				currentMinute = ctxRecover.currentMinute;
-				oneDayMaxTemp= ctxRecover.oneDayMaxTemp;
-				oneDayMaxHum = ctxRecover.oneDayMaxHum;
-				oneDayMinTemp = ctxRecover.oneDayMinTemp;
-				oneDayMinHum = ctxRecover.oneDayMinHum;
-				oneDayAvgTemp = ctxRecover.oneDayAvgTemp;
-				oneDayAvgHum = ctxRecover.oneDayAvgHum;
-	    		/* verify if it is recovering from the same hour period */
-	    		if((currentTime - ctxRecover.lastContextUpdateTS)/3600 == 0) {
-					oneHourMaxTemp = ctxRecover.oneDayMaxTemp;
-					oneHourMaxHum = ctxRecover.oneDayMaxTemp;
-					oneHourMinTemp = ctxRecover.oneDayMaxTemp;
-					oneHourMinHum = ctxRecover.oneDayMaxTemp;
-					oneHourAvgTemp = ctxRecover.oneDayMaxTemp;
-					oneHourAvgHum = ctxRecover.oneDayMaxTemp;
-	    		}
-	    	}
-	    }
 	}
+	return isContextRecovered;
 }
 
 void Context::saveContext() {
+#ifdef DEBUG
 	Serial.println("saving context...");
-	/* alocates a context binary buffer to be written to the flash memory */
-	uint8_t *buffer = (uint8_t*) malloc(sizeof(struct ContextRecover));
-	/* get current time stamp */
-	lastContextUpdateTS = now();
-	/* move data from strcut to binary buffer */
-    uint16_t i = 0;
-    memcpy(&buffer[i], &currentState, sizeof(State));
-    i += sizeof(State);
-    memcpy(&buffer[i], &lastContextUpdateTS, sizeof(time_t));
-    i += sizeof(time_t);
-    size_t typeSize = sizeof(bool);
-    memcpy(&buffer[i], &isManuallyIrrigating, typeSize);
-    i += typeSize;
-    memcpy(&buffer[i], &isAutoIrrigationSuspended, typeSize);
-    i += typeSize;
-    typeSize = sizeof(uint32_t);
-    memcpy(&buffer[i], &autoIrrigationStartTime, typeSize);
-    i += typeSize;
-    typeSize = sizeof(uint16_t);
-    memcpy(&buffer[i], &autoIrrigationDuration, typeSize);
-    i += typeSize;
-    memcpy(&buffer[i], &lastValidAutoIrrigationDuration, typeSize);
-    i += typeSize;
-    typeSize = sizeof(uint32_t);
-    memcpy(&buffer[i], &manIrrigationStartTime, typeSize);
-    i += typeSize;
-    typeSize = sizeof(uint8_t);
-    memcpy(&buffer[i], &currentMinute, typeSize);
-    i += typeSize;
-    memcpy(&buffer[i], &currentHour, typeSize);
-    i += typeSize;
-    typeSize = sizeof(uint16_t);
-    memcpy(&buffer[i], &currentDay, typeSize);
-    i += typeSize;
-    typeSize = sizeof(float);
-    memcpy(&buffer[i], &oneHourMaxTemp, typeSize);
-    i += typeSize;
-    memcpy(&buffer[i], &oneHourMaxHum, typeSize);
-    i += typeSize;
-    memcpy(&buffer[i], &oneHourMinTemp, typeSize);
-    i += typeSize;
-    memcpy(&buffer[i], &oneHourMinHum, typeSize);
-    i += typeSize;
-    memcpy(&buffer[i], &oneHourAvgTemp, typeSize);
-    i += typeSize;
-    memcpy(&buffer[i], &oneHourAvgHum, typeSize);
-    i += typeSize;
-    memcpy(&buffer[i], &oneDayMaxTemp, typeSize);
-    i += typeSize;
-    memcpy(&buffer[i], &oneDayMaxHum, typeSize);
-    i += typeSize;
-    memcpy(&buffer[i], &oneDayMinTemp, typeSize);
-    i += typeSize;
-    memcpy(&buffer[i], &oneDayMinHum, typeSize);
-    i += typeSize;
-    memcpy(&buffer[i], &oneDayAvgTemp, typeSize);
-    i += typeSize;
-    memcpy(&buffer[i], &oneDayAvgHum, typeSize);
-	/* creates the context file */
-	File file = SPIFFS.open("/context.dat", "wb");
-	/* write context to the file */
-    if (file) {
-    	file.write(buffer, sizeof(struct ContextRecover));
-    	file.close();
-    }
-    else {
-    	LogError::getInstance()->insertError("ERROR: opening context file!");
-    }
-    free(buffer);
-}
-
-void Context::buildContextRecover(uint8_t *src, struct ContextRecover *ctxRecover) {
-    uint16_t i = 0;
-    memcpy(&ctxRecover->currentState, &src[i], sizeof(ctxRecover->currentState));
-    i += sizeof(ctxRecover->currentState);
-    memcpy(&ctxRecover->lastContextUpdateTS, &src[i], sizeof(ctxRecover->lastContextUpdateTS));
-    i += sizeof(ctxRecover->lastContextUpdateTS);
-    memcpy(&ctxRecover->isManuallyIrrigating, &src[i], sizeof(ctxRecover->isManuallyIrrigating));
-    i += sizeof(ctxRecover->isManuallyIrrigating);
-    memcpy(&ctxRecover->isAutoIrrigationSuspended, &src[i], sizeof(ctxRecover->isAutoIrrigationSuspended));
-    i += sizeof(ctxRecover->isAutoIrrigationSuspended);
-    memcpy(&ctxRecover->autoIrrigationStartTime, &src[i], sizeof(ctxRecover->autoIrrigationStartTime));
-    i += sizeof(ctxRecover->autoIrrigationStartTime);
-    memcpy(&ctxRecover->autoIrrigationDuration, &src[i], sizeof(ctxRecover->autoIrrigationDuration));
-    i += sizeof(ctxRecover->autoIrrigationDuration);
-    memcpy(&ctxRecover->lastAutoIrrigationDuration, &src[i], sizeof(ctxRecover->lastAutoIrrigationDuration));
-    i += sizeof(ctxRecover->lastAutoIrrigationDuration);
-    memcpy(&ctxRecover->manIrrigationStartTime, &src[i], sizeof(ctxRecover->manIrrigationStartTime));
-    i += sizeof(ctxRecover->manIrrigationStartTime);
-    memcpy(&ctxRecover->currentMinute, &src[i], sizeof(ctxRecover->currentMinute));
-    i += sizeof(ctxRecover->currentMinute);
-    memcpy(&ctxRecover->currentHour, &src[i], sizeof(ctxRecover->currentHour));
-    i += sizeof(ctxRecover->currentHour);
-    memcpy(&ctxRecover->currentDay, &src[i], sizeof(ctxRecover->currentDay));
-    i += sizeof(ctxRecover->currentDay);
-    memcpy(&ctxRecover->oneHourMaxTemp, &src[i], sizeof(ctxRecover->oneHourMaxTemp));
-    i += sizeof(ctxRecover->oneHourMaxTemp);
-    memcpy(&ctxRecover->oneHourMaxHum, &src[i], sizeof(ctxRecover->oneHourMaxHum));
-    i += sizeof(ctxRecover->oneHourMaxHum);
-    memcpy(&ctxRecover->oneHourMinTemp, &src[i], sizeof(ctxRecover->oneHourMinTemp));
-    i += sizeof(ctxRecover->oneHourMinTemp);
-    memcpy(&ctxRecover->oneHourMinHum, &src[i], sizeof(ctxRecover->oneHourMinHum));
-    i += sizeof(ctxRecover->oneHourMinHum);
-    memcpy(&ctxRecover->oneHourAvgTemp, &src[i], sizeof(ctxRecover->oneHourAvgTemp));
-    i += sizeof(ctxRecover->oneHourAvgTemp);
-    memcpy(&ctxRecover->oneHourAvgHum, &src[i], sizeof(ctxRecover->oneHourAvgHum));
-    i += sizeof(ctxRecover->oneHourAvgHum);
-    memcpy(&ctxRecover->oneDayMaxTemp, &src[i], sizeof(ctxRecover->oneDayMaxTemp));
-    i += sizeof(ctxRecover->oneDayMaxTemp);
-    memcpy(&ctxRecover->oneDayMaxHum, &src[i], sizeof(ctxRecover->oneDayMaxHum));
-    i += sizeof(ctxRecover->oneDayMaxHum);
-    memcpy(&ctxRecover->oneDayMinTemp, &src[i], sizeof(ctxRecover->oneDayMinTemp));
-    i += sizeof(ctxRecover->oneDayMinTemp);
-    memcpy(&ctxRecover->oneDayMinHum, &src[i], sizeof(ctxRecover->oneDayMinHum));
-    i += sizeof(ctxRecover->oneDayMinHum);
-    memcpy(&ctxRecover->oneDayAvgTemp, &src[i], sizeof(ctxRecover->oneDayAvgTemp));
-    i += sizeof(ctxRecover->oneDayAvgTemp);
-    memcpy(&ctxRecover->oneDayAvgHum, &src[i], sizeof(ctxRecover->oneDayAvgHum));
-    i += sizeof(ctxRecover->oneDayAvgHum);
+#endif
+	/* open context file */
+	File file = SPIFFS.open("/context.txt", "w");
+	if (file) {
+		/* get current time stamp */
+		time_t currentCheckpointTS = now();
+		file.println(currentCheckpointTS);
+		file.println((uint32_t) currentState);
+		file.println(currentDay);
+		file.println(currentHour);
+		file.println(currentMinute);
+		file.println(isAutoIrrigationSuspended);
+		file.println(autoIrrigationStartTime);
+		file.println(autoIrrigationDuration);
+		file.println(lastValidAutoIrrigationDuration);
+		file.println(manIrrigationStartTime);
+		file.println(oneDayMaxTemp, 2);
+		file.println(oneDayMaxHum, 2);
+		file.println(oneDayMinTemp, 2);
+		file.println(oneDayMinHum, 2);
+		file.println(oneDayAvgTemp, 2);
+		file.println(oneDayAvgHum, 2);
+		file.println(oneHourMaxTemp, 2);
+		file.println(oneHourMaxHum, 2);
+		file.println(oneHourMinTemp, 2);
+		file.println(oneHourMinHum, 2);
+		file.println(oneHourAvgTemp, 2);
+		file.println(oneHourAvgHum, 2);
+		file.close();
+	}
+	else {
+		LogError::getInstance()->insertError("ERROR: creating context file!");
+	}
 }
 
 void Context::resetHourContext() {
@@ -505,3 +447,47 @@ JLed* Context::getStateLed() {
 	return &stateLed;
 }
 
+void Context::printContextSerial() {
+	Serial.print("current state: ");
+	Serial.println((uint32_t) getCurrentState());
+	Serial.print("currentDay: ");
+	Serial.println(getCurrentDay());
+	Serial.print("currentHour: ");
+	Serial.println(getCurrentHour());
+	Serial.print("currentMinute: ");
+	Serial.println(getCurrentMinute());
+	Serial.print("isAutoIrrigationSuspended: ");
+	Serial.println(getIsAutoIrrigationSuspended());
+	Serial.print("autoIrrigationStartTime: ");
+	Serial.println(getAutoIrrigationStartTime());
+	Serial.print("autoIrrigationDuration: ");
+	Serial.println(getAutoIrrigationDuration());
+	Serial.print("lastValidAutoIrrigationDuration: ");
+	Serial.println(getLastValidAutoIrrigationDuration());
+	Serial.print("manIrrigationStartTime: ");
+	Serial.println(getManIrrigationStartTime());
+	Serial.print("oneDayMaxTemp: ");
+	Serial.println(getOneDayMaxTemp(), 2);
+	Serial.print("oneDayMaxHum: ");
+	Serial.println(getOneDayMaxHum(), 2);
+	Serial.print("oneDayMinTemp: ");
+	Serial.println(getOneDayMinTemp(), 2);
+	Serial.print("oneDayMinHum: ");
+	Serial.println(getOneDayMinHum(), 2);
+	Serial.print("oneDayAvgTemp: ");
+	Serial.println(getOneDayAvgTemp(), 2);
+	Serial.print("oneDayAvgHum: ");
+	Serial.println(getOneDayAvgHum(), 2);
+	Serial.print("oneHourMaxTemp: ");
+	Serial.println(getOneHourMaxTemp(), 2);
+	Serial.print("oneHourMaxHum: ");
+	Serial.println(getOneHourMaxHum(), 2);
+	Serial.print("oneHourMinTemp: ");
+	Serial.println(getOneHourMinTemp(), 2);
+	Serial.print("oneHourMinHum: ");
+	Serial.println(getOneHourMinHum(), 2);
+	Serial.print("oneHourAvgTemp: ");
+	Serial.println(getOneHourAvgTemp(), 2);
+	Serial.print("oneHourAvgHum: ");
+	Serial.println(getOneHourAvgHum(), 2);
+}

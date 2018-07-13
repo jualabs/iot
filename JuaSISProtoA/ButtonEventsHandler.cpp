@@ -129,7 +129,14 @@ void ButtonEventsHandler::mainBtnEventHandler(AceButton* button, uint8_t eventTy
           }
           break;
         case AceButton::kEventLongPressed:
-          // do nothing
+            switch(btnId) {
+              case WHITE_BTN_ID:
+                setTimeBtnEventHandler();
+                break;
+              case RED_BTN_ID:
+                eraseFilesBtnEventHandler();
+                break;
+            }
           break;
       }
       break;

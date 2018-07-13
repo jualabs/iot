@@ -195,9 +195,25 @@ void TimeEventsHandler::dailyTimeEventHandler() {
 #ifdef DEBUG
 	Serial.println("dailyTimeEventHandler");
 	printTime();
-	if(now() > 1517923287) {
+	if(now() > 1518788760) {
 		Serial.println("simulating power failure!");
 		stopTimeEvents();
+		/* print current context */
+		Serial.println("**** current context ****");
+		context->printContextSerial();
+		Serial.println("*************************");
+		/* print stored context */
+		File file = SPIFFS.open("/context.txt", "r");
+		if(file) {
+			Serial.println("**** stored context ****");
+			while(file.available())
+				Serial.println(file.readStringUntil('\n'));
+			Serial.println("************************");
+			file.close();
+		}
+		/* change device state */
+		context->changeState(Context::State::FAILED);
+		return;
 	}
 #endif
 	uint16_t currentDay = context->getCurrentDay();

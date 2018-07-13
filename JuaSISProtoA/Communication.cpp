@@ -1,5 +1,30 @@
 #include "Communication.h"
 
+// WidgetTable table;
+
+// BLYNK_ATTACH_WIDGET(table, V1);
+
+int rowIndex = 0;
+
+// Button on V10 adds new items
+/*
+BLYNK_WRITE(V9) {
+  if (param.asInt()) {
+    table.addRow(rowIndex, "Test row", millis() / 1000);
+    table.pickRow(rowIndex);
+    rowIndex++;
+  }
+}
+
+// Button on V11 clears the table
+BLYNK_WRITE(V11) {
+  if (param.asInt()) {
+    table.clear();
+    rowIndex = 0;
+  }
+}
+*/
+
 Communication* comm;
 
 void dataCallbackWrapper(uint32_t *client, const char* topic, uint32_t topic_len, const char *data, uint32_t lenght) {
@@ -24,27 +49,24 @@ Communication::Communication() {
 }
 
 void Communication::initCommunication() {
-#ifdef AP_MODE
-	Serial.print("\n\nconfiguring AP...");
-	WiFi.softAP(ssid, password);
-	IPAddress myIP = WiFi.softAPIP();
-	Serial.print("AP IP address: ");
-	Serial.println(myIP);
-#else
-	Serial.print("\n\nconnecting to \"");
-	Serial.print(ssid);
-	Serial.println("\"...");
-	WiFi.begin(ssid, password);
-	while (WiFi.status() != WL_CONNECTED) {
-		delay(500);
-		Serial.print("#");
-	}
-	Serial.println(" connected!");
-	Serial.print("IP address: ");
-	Serial.println(WiFi.localIP());
-#endif
+/*
+	Blynk.begin(auth, ssid, pass);
+	  // Setup table event callbacks
+	  table.onOrderChange([](int indexFrom, int indexTo) {
+	    Serial.print("Reordering: ");
+	    Serial.print(indexFrom);
+	    Serial.print(" => ");
+	    Serial.print(indexTo);
+	    Serial.println();
+	  });
+	  table.onSelectChange([](int index, bool selected) {
+	    Serial.print("Item ");
+	    Serial.print(index);
+	    Serial.print(selected ? " marked" : " unmarked");
+	  });
+*/
 }
 
 void Communication::checkCommunication() {
-
+//	Blynk.run();
 }

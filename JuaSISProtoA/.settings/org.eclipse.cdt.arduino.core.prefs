@@ -1,2 +1,2 @@
 eclipse.preferences.version=1
-libraries=["AceButton","TimeAlarms",{"package"\:"esp8266","platform"\:"esp8266","library"\:"ESP8266WiFi"},"Time","JLed","DHT sensor library","Adafruit Unified Sensor","uMQTTBroker"]
+libraries=["AceButton","TimeAlarms",{"package"\:"esp8266","platform"\:"esp8266","library"\:"ESP8266WiFi"},"Time","JLed","DHT sensor library",{"package"\:"esp8266","platform"\:"esp8266","library"\:"SoftwareSerial"},"Adafruit Unified Sensor","Blynk"]
