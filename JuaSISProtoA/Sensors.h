@@ -6,7 +6,7 @@
 #include "DHT.h"
 
 // sensor definitions
-#define DHTPIN D3         // what digital pin the DHT22 is connected to
+#define DHTPIN D7         // what digital pin the DHT22 is connected to
 #define DHTTYPE DHT22     // there are multiple kinds of DHT sensors
 
 class Sensors {

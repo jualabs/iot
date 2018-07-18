@@ -48,7 +48,12 @@ void Communication::checkCommunication() {
 		}
 		break;
 	case CommunicationState::CONNECTING:
-		if(WiFi.status() != WL_CONNECTED) {
+		if(enableCommFlag == false) {
+			Serial.println("\r\naborting connection...");
+			WiFi.disconnect(true);
+			commState = CommunicationState::DISCONNECTED;
+		}
+		else if(WiFi.status() != WL_CONNECTED) {
 			if((millis() - lastVerificationTS) > 500) {
 				Serial.print(".");
 				lastVerificationTS = millis();
@@ -64,6 +69,12 @@ void Communication::checkCommunication() {
 				/* username, password for ftp. set ports in ESP8266FtpServer.h  (default 21, 50009 for PASV) */
 				ftpSrv.begin(ftpUser, ftpPass);
 				commState = CommunicationState::CONNECTED;
+			}
+			else {
+				Serial.println("ERROR: unable to open file system!");
+				Serial.println("disconnecting...");
+				WiFi.disconnect(true);
+				commState = CommunicationState::DISCONNECTED;
 			}
 		}
 		break;

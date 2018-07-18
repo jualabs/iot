@@ -12,7 +12,7 @@
 #include "LogError.h"
 #include "Parameters.h"
 
-#define SIMULATION
+#undef SIMULATION
 
 extern "C" {
 #include "user_interface.h"

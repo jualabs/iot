@@ -4,8 +4,8 @@
 #include <Arduino.h>
 
 // relays definitions
-#define MAN_PUMP_RELAY  D7
-#define AUT_PUMP_RELAY  D8
+#define MAN_PUMP_RELAY  D3
+#define AUT_PUMP_RELAY  D4
 
 
 class Actuators {

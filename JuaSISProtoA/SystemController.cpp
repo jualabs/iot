@@ -8,8 +8,8 @@ SystemController::SystemController() : context(Context::getInstance()), rtc(DS13
 void SystemController::setup() {
 	/* initialize communication */
 	// comm->initCommunication();
+	/* initialize timing parameters and RTC */
 	setupTime();
-	// sensors->verifySensors();
 	/* initialize time events */
 	timeEventsHandler->initTimeEvents();
 	/* initialize the buttons events */
@@ -19,6 +19,8 @@ void SystemController::setup() {
 		/* if recovered restart the process through time events*/
 		timeEventsHandler->startTimeEvents();
 	}
+
+#if 0
 #ifdef DEBUG
 	String str = "";
 	Dir dir = SPIFFS.openDir("/");
@@ -29,6 +31,7 @@ void SystemController::setup() {
 	    str += "\r\n";
 	}
 	Serial.print(str);
+#endif
 #endif
 }
 
@@ -41,14 +44,6 @@ void SystemController::loop() {
 	if(context->getCurrentState() == Context::State::SET_TIME) {
 		setDateTimeFromSerial();
 	}
-	else if(context->getCurrentState() == Context::State::GET_DATA) {
-		if(comm->isEnabled() == false) {
-			comm->enable();
-		}
-	}
-	else {
-		comm->disable();
-	}
 }
 
 void SystemController::stateLedUpdate() {
@@ -56,7 +51,6 @@ void SystemController::stateLedUpdate() {
 }
 
 void SystemController::setupTime() {
-#ifndef SIMULATION
 	setSyncProvider(rtc.get);
 	if(timeStatus() != timeSet) {
 		Serial.println("Unable to sync with the RTC");
@@ -64,11 +58,7 @@ void SystemController::setupTime() {
 	else {
 		Serial.println("RTC has set the system time");
 	}
-#else
-	setTime(22, 59, 0, 31, 12, 2017);
-	// setTime(12, 59, 0, 6, 2, 2018);
 	timeEventsHandler->printTime();
-#endif
 }
 
 void SystemController::setDateTimeFromSerial() {

@@ -10,6 +10,7 @@ using namespace ace_button;
 #include "Actuators.h"
 #include "Datalogger.h"
 #include "TimeEventsHandler.h"
+#include "Communication.h"
 
 // buttons definitions
 #define WHITE_BTN       D5
@@ -20,11 +21,11 @@ using namespace ace_button;
 class ButtonEventsHandler {
 	public:
 		static ButtonEventsHandler* getInstance();
-		// main button handler
+		/* main function for button handling */
 		void mainBtnEventHandler(AceButton* button, uint8_t eventType, uint8_t buttonState);
 		void checkButtonEvents();
 		void initButtons();
-		static void btnHandler(AceButton* button, uint8_t eventType, uint8_t buttonState);
+
 	private:
 		ButtonEventsHandler();  // private so that it can  not be called
 		ButtonEventsHandler(const ButtonEventsHandler&) = delete;
@@ -34,7 +35,8 @@ class ButtonEventsHandler {
 		Actuators* actuators;
 		Datalogger* datalogger;
 		TimeEventsHandler* timeEventsHandler;
-		// derivated handlers
+		Communication* comm;
+		/* derivated handlers */
 		void startExperimentBtnEventHandler();
 		void enterGetDataStateBtnEventHandler();
 		void startManualIrrigationBtnEventHandler();
@@ -46,6 +48,7 @@ class ButtonEventsHandler {
 		void eraseFilesBtnEventHandler();
 		void dumpErrorLogBtnEventHandler();
 		void setTimeBtnEventHandler();
+		void enableFTPServerBtnEventHandler();
 };
 
 #endif

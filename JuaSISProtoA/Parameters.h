@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-#define DEBUG 1
+#undef DEBUG
 
 static const uint8_t autoIrrigationStartHour = 7;
 static const uint8_t autoIrrigationStartMinute = 30;

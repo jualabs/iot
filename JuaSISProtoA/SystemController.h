@@ -14,7 +14,7 @@
 #include "DS1302RTC.h"
 #include "Communication.h"
 
-#define SIMULATION
+// #define SIMULATION
 
 class SystemController {
 	public:

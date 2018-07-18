@@ -13,15 +13,16 @@ void buttonHandlerWrapper(AceButton* button, uint8_t eventType, uint8_t buttonSt
 ButtonEventsHandler* ButtonEventsHandler::pInstance = nullptr;
 
 ButtonEventsHandler* ButtonEventsHandler::getInstance() {
-   if (!pInstance)
-      pInstance = new ButtonEventsHandler();
+	if (!pInstance)
+		pInstance = new ButtonEventsHandler();
 
-   return pInstance;
+	return pInstance;
 }
 
 ButtonEventsHandler::ButtonEventsHandler() :
-										context(Context::getInstance()), actuators(Actuators::getInstance()),
-										datalogger(Datalogger::getInstance()), timeEventsHandler(TimeEventsHandler::getInstance()) {}
+														context(Context::getInstance()), actuators(Actuators::getInstance()),
+														datalogger(Datalogger::getInstance()), timeEventsHandler(TimeEventsHandler::getInstance()),
+														comm(Communication::getInstance()) {}
 
 void ButtonEventsHandler::initButtons() {
 	// configure buttons
@@ -36,7 +37,6 @@ void ButtonEventsHandler::initButtons() {
 	pinMode(WHITE_BTN, INPUT);
 	whiteBtn.setButtonConfig(&btnConfig);
 	whiteBtn.init(WHITE_BTN, HIGH, WHITE_BTN_ID);
-
 }
 
 void ButtonEventsHandler::checkButtonEvents() {
@@ -45,138 +45,139 @@ void ButtonEventsHandler::checkButtonEvents() {
 }
 
 void ButtonEventsHandler::mainBtnEventHandler(AceButton* button, uint8_t eventType, uint8_t buttonState) {
-  int btnId = button->getId();
+	int btnId = button->getId();
 
-  switch(context->getCurrentState()) {
-    case Context::State::STAND_BY:
-      switch (eventType) {
-        case AceButton::kEventReleased:
-          // do nothing
-          break;
-        case AceButton::kEventLongPressed:
-          switch(btnId) {
-            case WHITE_BTN_ID:
-              startExperimentBtnEventHandler();
-              break;
-            case RED_BTN_ID:
-              enterGetDataStateBtnEventHandler();
-              break;
-          }
-          break;
-      }
-      break;
-    case Context::State::RUNNING:
-      switch (eventType) {
-        case AceButton::kEventReleased:
-          switch(btnId) {
-            case WHITE_BTN_ID:
-              if(context->getIsManuallyIrrigating() == false)
-                startManualIrrigationBtnEventHandler();  
-              else
-                stopManualIrrigationBtnEventHandler();
-              break;
-            case RED_BTN_ID:
-              suspendAutoIrrigationBtnEventHandler();
-              break;
-          }
-          break;
-        case AceButton::kEventLongPressed:
-          switch(btnId) {
-            case WHITE_BTN_ID:
-              dumpExperimentStateBtnEventHandler();
-              break;
-            case RED_BTN_ID:
-              stopExperimentBtnEventHandler();
-              break;
-          }
-          break;
-      }
-      break;
-    case Context::State::GET_DATA:
-      switch (eventType) {
-        case AceButton::kEventReleased:
-          switch(btnId) {
-            case WHITE_BTN_ID:
-              dumpFilesBtnEventHandler();
-              break;
-            case RED_BTN_ID:
-              // do nothing
-              break;
-          }
-          break;
-        case AceButton::kEventLongPressed:
-          switch(btnId) {
-            case WHITE_BTN_ID:
-              setTimeBtnEventHandler();
-              break;
-            case RED_BTN_ID:
-              eraseFilesBtnEventHandler();
-              break;
-          }
-          break;
-      }
-      break;
-    case Context::State::FAILED:
-      switch (eventType) {
-        case AceButton::kEventReleased:
-          switch(btnId) {
-            case WHITE_BTN_ID:
-              dumpExperimentStateBtnEventHandler();
-              break;
-            case RED_BTN_ID:
-              dumpErrorLogBtnEventHandler();
-              break;
-          }
-          break;
-        case AceButton::kEventLongPressed:
-            switch(btnId) {
-              case WHITE_BTN_ID:
-                setTimeBtnEventHandler();
-                break;
-              case RED_BTN_ID:
-                eraseFilesBtnEventHandler();
-                break;
-            }
-          break;
-      }
-      break;
-  }
+	switch(context->getCurrentState()) {
+		case Context::State::STAND_BY:
+			switch (eventType) {
+				case AceButton::kEventReleased:
+					// do nothing
+					break;
+				case AceButton::kEventLongPressed:
+					switch(btnId) {
+						case WHITE_BTN_ID:
+							startExperimentBtnEventHandler();
+							break;
+						case RED_BTN_ID:
+							enterGetDataStateBtnEventHandler();
+							break;
+					}
+					break;
+			}
+			break;
+		case Context::State::RUNNING:
+			switch (eventType) {
+				case AceButton::kEventReleased:
+					switch(btnId) {
+						case WHITE_BTN_ID:
+							if(context->getIsManuallyIrrigating() == false)
+								startManualIrrigationBtnEventHandler();
+							else
+								stopManualIrrigationBtnEventHandler();
+							break;
+						case RED_BTN_ID:
+							suspendAutoIrrigationBtnEventHandler();
+							break;
+					}
+					break;
+				case AceButton::kEventLongPressed:
+					switch(btnId) {
+						case WHITE_BTN_ID:
+							dumpExperimentStateBtnEventHandler();
+							break;
+						case RED_BTN_ID:
+							stopExperimentBtnEventHandler();
+							break;
+					}
+					break;
+			}
+			break;
+		case Context::State::GET_DATA:
+			switch (eventType) {
+				case AceButton::kEventReleased:
+					switch(btnId) {
+						case WHITE_BTN_ID:
+							enableFTPServerBtnEventHandler();
+							break;
+						case RED_BTN_ID:
+							dumpFilesBtnEventHandler();
+							break;
+					}
+					break;
+				case AceButton::kEventLongPressed:
+					switch(btnId) {
+						case WHITE_BTN_ID:
+							setTimeBtnEventHandler();
+							break;
+						case RED_BTN_ID:
+							eraseFilesBtnEventHandler();
+							break;
+					}
+					break;
+			}
+			break;
+		case Context::State::FAILED:
+			switch (eventType) {
+				case AceButton::kEventReleased:
+					switch(btnId) {
+						case WHITE_BTN_ID:
+							enableFTPServerBtnEventHandler();
+							break;
+						case RED_BTN_ID:
+							dumpExperimentStateBtnEventHandler();
+							dumpErrorLogBtnEventHandler();
+							break;
+					}
+					break;
+				case AceButton::kEventLongPressed:
+					switch(btnId) {
+						case WHITE_BTN_ID:
+							setTimeBtnEventHandler();
+							break;
+						case RED_BTN_ID:
+							eraseFilesBtnEventHandler();
+							break;
+					}
+					break;
+			}
+			break;
+	}
 }
 
 void ButtonEventsHandler::startExperimentBtnEventHandler() {
-// #ifdef DEBUG
+	// #ifdef DEBUG
 	Serial.println("experiment started...");
-// #else
+	// #else
 	// change the current system state
 	context->changeState(Context::State::RUNNING);
 	// start the time events
 	timeEventsHandler->startTimeEvents();
-// #endif
+	// #endif
 }
 
 void ButtonEventsHandler::enterGetDataStateBtnEventHandler() {
-// #ifdef DEBUG
+	// #ifdef DEBUG
 	Serial.println("enterGetDataStateBtnEventHandler");
-// #else
+	// #else
 	context->changeState(Context::State::GET_DATA);
-// #endif
+	// #endif
 }
 
 void ButtonEventsHandler::startManualIrrigationBtnEventHandler() {
-// #ifdef DEBUG
+	// #ifdef DEBUG
 	Serial.println("start manual irrigation...");
-// #else
+	// #else
 	context->setIsManuallyIrrigating(true);
 	context->setManIrrigationStartTime(now());
 	/* turn manual pump on */
 	actuators->setManPump(true);
-// #endif
+	// #endif
 }
 
 void ButtonEventsHandler::stopManualIrrigationBtnEventHandler() {
-// #ifdef DEBUG
+	// #ifdef DEBUG
 	Serial.println("stop manual irrigation...");
-// #else
+	// #else
 	context->setIsManuallyIrrigating(false);
 	actuators->setManPump(false);
 
@@ -187,21 +188,21 @@ void ButtonEventsHandler::stopManualIrrigationBtnEventHandler() {
 	sprintf(line,"%d,%d,%d", startTime, stopTime, (stopTime - startTime));
 
 	datalogger->appendLineInFile("/man-irrig.csv", line);
-// #endif
+	// #endif
 }
 
 void ButtonEventsHandler::suspendAutoIrrigationBtnEventHandler() {
-// #ifdef DEBUG
+	// #ifdef DEBUG
 	Serial.println("suspend automatic irrigation...");
-// #else
+	// #else
 	context->setIsAutoIrrigationSuspended(true);
-// #endif
+	// #endif
 }
 
 void ButtonEventsHandler::dumpExperimentStateBtnEventHandler() {
-// #ifdef DEBUG
+	// #ifdef DEBUG
 	Serial.println("dumpExperimentStateBtnEventHandler");
-// #else
+	// #else
 	Serial.println("********** current experiment state **********");
 	Serial.print("state: ");
 	Serial.println(context->getCurrentStateString());
@@ -245,40 +246,40 @@ void ButtonEventsHandler::dumpExperimentStateBtnEventHandler() {
 	Serial.print("currentDay: ");
 	Serial.println(context->getCurrentDay());
 	Serial.println("**********************************************");
-// #endif
+	// #endif
 }
 
 void ButtonEventsHandler::stopExperimentBtnEventHandler() {
-// #ifdef DEBUG
+	// #ifdef DEBUG
 	Serial.println("experiment stopped...");
-// #else
+	// #else
 	/* change the current system state */
-	context->changeState(Context::State::STOPPED);
+	context->changeState(Context::State::GET_DATA);
 	/* stop the time events */
 	timeEventsHandler->stopTimeEvents();
-//#endif
+	//#endif
 }
 
 void ButtonEventsHandler::dumpFilesBtnEventHandler() {
-//#ifdef DEBUG
+	//#ifdef DEBUG
 	Serial.println("dumpFilesBtnEventHandler");
-//#else
+	//#else
 	context->changeState(Context::State::STAND_BY);
 	datalogger->dumpFiles();
-// #endif
+	// #endif
 }
 
 void ButtonEventsHandler::eraseFilesBtnEventHandler() {
-//#ifdef DEBUG
-  Serial.println("eraseFilesBtnEventHandler");
-//#endif
-  context->changeState(Context::State::STAND_BY);
-  datalogger->formatFS();
+#ifdef DEBUG
+	Serial.println("eraseFilesBtnEventHandler");
+#endif
+	context->changeState(Context::State::STAND_BY);
+	datalogger->formatFS();
 }
 
 void ButtonEventsHandler::dumpErrorLogBtnEventHandler() {
 #ifdef DEBUG
-  Serial.println("dumpErrorLogBtnEventHandler");
+	Serial.println("dumpErrorLogBtnEventHandler");
 #endif
 }
 
@@ -287,4 +288,17 @@ void ButtonEventsHandler::setTimeBtnEventHandler() {
 	context->changeState(Context::State::SET_TIME);
 	Serial.println("setTimeBtnEventHandler");
 #endif
+}
+
+void ButtonEventsHandler::enableFTPServerBtnEventHandler() {
+#ifdef DEBUG
+	Serial.println("enableFTPBtnEventHandler");
+#endif
+	if(comm->isEnabled() == true) {
+		context->changeState(Context::State::GET_DATA);
+		comm->disable();
+	}
+	else {
+		comm->enable();
+	}
 }

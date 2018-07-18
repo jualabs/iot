@@ -1,6 +1,6 @@
 #include "Context.h"
 
-// global static pointer used to ensure a single instance of the class.
+/* global static pointer used to ensure a single instance of the class */
 Context* Context::pInstance = nullptr;
 
 /** This function is called to create an instance of the class.
@@ -44,6 +44,8 @@ Context::Context() : stateLed(JLed(STATE_LED_PIN)) {
 
 bool Context::recoverContext() {
 	bool isContextRecovered = false;
+
+	changeState(Context::State::STAND_BY);
 	/* if there is a saved context ... */
 	if(SPIFFS.exists("/context.txt")) {
 #ifdef DEBUG
@@ -59,6 +61,8 @@ bool Context::recoverContext() {
 #ifdef DEBUG
 			Serial.print("last checkpoint ts: ");
 			Serial.println(contextCheckpointTS);
+			Serial.print("rtc ts: ");
+			Serial.println(currentTime);
 #endif
 			/* verify if the current time stamp is valid related to the stored context, that is, bigger than */
 			if((currentTime - contextCheckpointTS) < 0) {
@@ -124,6 +128,7 @@ bool Context::recoverContext() {
 			file.close();
 		}
 	    else {
+	    	changeState(Context::State::FAILED);
 	    	LogError::getInstance()->insertError("ERROR: opening context file!");
 	    }
 	}
@@ -380,9 +385,6 @@ char * Context::getCurrentStateString()  {
 		case State::SET_TIME:
 			strcpy(returnStr,"SET_TIME");
 			break;
-		case State::STOPPED:
-			strcpy(returnStr,"STOPPED");
-			break;
 	}
 	return returnStr;
 }
@@ -435,9 +437,6 @@ void Context::changeState(State toState) {
 			break;
 		case State::SET_TIME:
 			stateLed.Blink(150, 850).Forever();
-			break;
-		case State::STOPPED:
-			stateLed.Blink(2000, 2000).Forever();
 			break;
 	}
 	stateLed.Update();

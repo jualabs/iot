@@ -122,7 +122,7 @@ void TimeEventsHandler::minTimeEventHandler() {
 	/* reprogram next event */
 	minEventAlarmId = Alarm.alarmOnce(eventHour, nextMinute, 10, minTimeEventHandlerWrapper);
 	/* save current context */
-	// context->saveContext();
+	context->saveContext();
 #ifdef SIMULATION
 	adjustTime(60);
 #endif
@@ -220,7 +220,7 @@ void TimeEventsHandler::dailyTimeEventHandler() {
 	/* verifies if it is the last experiment day */
 	if(currentDay >= EXPERIMENT_DURATION) {
 		/* change device state */
-		context->changeState(Context::State::STOPPED);
+		context->changeState(Context::State::GET_DATA);
 		/* stop all time events */
 		stopTimeEvents();
 	}
@@ -268,7 +268,6 @@ void TimeEventsHandler::dailyTimeEventHandler() {
 		context->setAutoIrrigationDuration(duration);
 		context->setCurrentDay(currentDay + 1);
 		context->resetDayContext();
-		context->saveContext();
 	}
 }
 
