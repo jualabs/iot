@@ -2,16 +2,18 @@
 
 SystemController::SystemController() : ui(UI::getInstance()), rfComm(RFCommunication::getInstance()), gps(GPSInterface::getInstance()),
 									   comm(Communication::getInstance()), teh(TimeEventsHandler::getInstance()) {
-	currentSystemState = SYSTEM_STATE::CONNECTING_TO_GPS;
+	currentSystemState = SYSTEM_STATE::INIT;
 	lastAttempt = 0;
 };
 
 void SystemController::setup() {
 	/* configure serial port */
 	Serial.begin(115200);
+	/* turn GPS on */
+	gps->init();
 	comm->init();
-	teh->initPeriodicTimeEvents();
-	// rfComm->init();
+	teh->initTimeEvents();
+	rfComm->init();
 }
 
 void SystemController::loop() {
@@ -22,20 +24,14 @@ void SystemController::loop() {
 	/* loop for user interface */
 	ui->loop();
 	/* loop for rf interface */
-	// rfComm->loop();
+	rfComm->loop();
 	/* main state machine loop */
 	switch(currentSystemState) {
-		case SYSTEM_STATE::CONNECTING_TO_GPS:
-			/* turn GPS on */
-			Serial.print("connecting to GPS...");
-			ui->setUIState(UI::UI_STATE::CONNECTING_TO_GPS);
-			gps->init();
-			Serial.println("[OK]");
-			/* change state */
-			currentSystemState = SYSTEM_STATE::CONNECTING_TO_NETWORK;
+		case SYSTEM_STATE::INIT:
+			lastAttempt = 0;
 			Serial.print("connecting to network...");
 			ui->setUIState(UI::UI_STATE::NETWORK_CONNECTION);
-			lastAttempt = 0;
+			currentSystemState = SYSTEM_STATE::CONNECTING_TO_NETWORK;
 			break;
 		case SYSTEM_STATE::CONNECTING_TO_NETWORK:
 			if((millis() - lastAttempt) > 500) {
@@ -77,35 +73,23 @@ void SystemController::loop() {
 			}
 			break;
 		case SYSTEM_STATE::CONNECTED_TO_DATA_SERVER:
+			lastAttempt = 0;
 			/* change state */
-			teh->startPeriodicTimeEvents();
-			ui->setUIState(UI::UI_STATE::NORMAL_OPERATION);
+			teh->startTimeEvents();
 			currentSystemState = SYSTEM_STATE::NORMAL_OPERATION;
 			break;
 		case SYSTEM_STATE::NORMAL_OPERATION:
-			if(rfComm->getRFEvent(RFCommunication::RF_EVENTS::BTN_0) == true) {
-				rfComm->clearRFEvent(RFCommunication::RF_EVENTS::BTN_0);
-				comm->sendData("{\"btn0\":1}");
-				/* clear rf button signal in 10 seconds */
-				teh->startSporadicTimeEvents(TimeEventsHandler::SPORADIC_TIME_EVENTS::CLEAR_BTN_0, CLEAR_BTN_PERIOD);
-			}
-			if(rfComm->getRFEvent(RFCommunication::RF_EVENTS::BTN_1) == true) {
-				rfComm->clearRFEvent(RFCommunication::RF_EVENTS::BTN_1);
-				comm->sendData("{\"btn1\":1}");
-				/* clear rf button signal in 10 seconds */
-				teh->startSporadicTimeEvents(TimeEventsHandler::SPORADIC_TIME_EVENTS::CLEAR_BTN_1, CLEAR_BTN_PERIOD);
-			}
-			if(teh->getTimeEvent(TimeEventsHandler::SPORADIC_TIME_EVENTS::CLEAR_BTN_0) == true) {
-				teh->clearTimeEvent(TimeEventsHandler::SPORADIC_TIME_EVENTS::CLEAR_BTN_0);
-				comm->sendData("{\"btn0\":0}");
-			}
-			if(teh->getTimeEvent(TimeEventsHandler::SPORADIC_TIME_EVENTS::CLEAR_BTN_1) == true) {
-				teh->clearTimeEvent(TimeEventsHandler::SPORADIC_TIME_EVENTS::CLEAR_BTN_1);
-				comm->sendData("{\"btn1\":0}");
-			}
-			if(teh->getTimeEvent(TimeEventsHandler::PERIODIC_TIME_EVENTS::SEND_GPS_DATA) == true) {
-				teh->clearTimeEvent(TimeEventsHandler::PERIODIC_TIME_EVENTS::SEND_GPS_DATA);
+			if(teh->getTimeEvent(TimeEventsHandler::TIME_EVENTS::SEND_GPS_DATA) == true) {
+				/* clear time event */
+				teh->clearTimeEvent(TimeEventsHandler::TIME_EVENTS::SEND_GPS_DATA);
 				comm->sendData(gps->getData());
+				/* verify if it already fixed */
+				if(gps->isFixed()) {
+					ui->setUIState(UI::UI_STATE::NORMAL_OPERATION);
+				}
+				else {
+					ui->setUIState(UI::UI_STATE::GPS_NOT_FIXED);
+				}
 			}
 			break;
 	}

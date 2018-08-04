@@ -19,7 +19,7 @@ UI* UI::getInstance() {
 }
 
 UI::UI() : statusLED(JLed(STATUS_LED_PIN)) {
-	currentUIState = UI_STATE::CONNECTING_TO_GPS;
+	currentUIState = UI_STATE::NETWORK_CONNECTION;
 	/* set a invalid value for lastUIState to force state changing on first run */
 	lastUIState = UI_STATE::IDLE;
 }
@@ -28,21 +28,17 @@ void UI::loop() {
 	if (lastUIState != currentUIState) {
 		lastUIState = currentUIState;
 		switch(currentUIState) {
-			case UI_STATE::CONNECTING_TO_GPS:
-				Serial.println("CONNECTING_TO_GPS");
-				statusLED.Blink(850, 150).Forever();
-				break;
 			case UI_STATE::NETWORK_CONNECTION:
-				Serial.println("NETWORK_CONNECTION");
-				statusLED.Blink(500, 500).Forever();
+				statusLED.Blink(150, 150).Forever();
 				break;
 			case UI_STATE::DATA_SERVER_CONNECTION:
-				Serial.println("DATA_SERVER_CONNECTION");
-				statusLED.Blink(2000, 2000).Forever();
+				statusLED.Blink(1000, 1000).Forever();
+				break;
+			case UI_STATE::GPS_NOT_FIXED:
+				statusLED.Blink(3000, 3000).Forever();
 				break;
 			case UI_STATE::NORMAL_OPERATION:
-				Serial.println("DATA_SERVER_CONNECTION");
-				statusLED.Blink(150, 1850).Forever();
+				statusLED.Blink(150, 9850).Forever();
 				break;
 		}
 	}

@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <LGPS.h>
 #include <LBattery.h>
+#include "RFCommunication.h"
 #include <stdio.h>
 
 class GPSInterface {
@@ -11,6 +12,7 @@ class GPSInterface {
 		static GPSInterface* getInstance();
 		void init();
 		String getData();
+		bool isFixed();
 	private:
 		GPSInterface();  /* private so that it can  not be called */
 		GPSInterface(const GPSInterface&) = delete;
@@ -22,6 +24,7 @@ class GPSInterface {
 		float arrayToFloat(const char* char_array);
 		void convertCoords(const char* latitude, const char* longitude, const char* lat_direction,
 		                   const char* lon_direction, char* lat_return, char* lon_return, int buff_length);
+		RFCommunication* rfComm;
 };
 
 #endif

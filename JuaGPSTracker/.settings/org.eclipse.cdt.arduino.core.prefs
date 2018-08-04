@@ -1,2 +1,2 @@
 eclipse.preferences.version=1
-libraries=["TimeAlarms",{"package"\:"LinkIt","platform"\:"arm","library"\:"LWiFi"},"Time","RFremote","JLed",{"package"\:"LinkIt","platform"\:"arm","library"\:"LBattery"},"rc-switch",{"package"\:"LinkIt","platform"\:"arm","library"\:"LGPS"},{"package"\:"LinkIt","platform"\:"arm","library"\:"LGPRS"},"PubSubClient"]
+libraries=["TimeAlarms",{"package"\:"LinkIt","platform"\:"arm","library"\:"LWiFi"},"Time","JLed",{"package"\:"LinkIt","platform"\:"arm","library"\:"LBattery"},"rc-switch",{"package"\:"LinkIt","platform"\:"arm","library"\:"LGPS"},{"package"\:"LinkIt","platform"\:"arm","library"\:"LGPRS"},"PubSubClient"]
