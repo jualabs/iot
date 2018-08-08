@@ -8,6 +8,7 @@
 
 #define UBIDOTS_SERVER "things.ubidots.com"
 #define PATH "/api/v1.6/devices/calango-viajante?token=A1E-cl4w5Oltm5tBxLbsY9ucNn3xA1Dsyu"
+
 /* APN of your cellular provider */
 #define APN "claro.com.br"
 #define APN_USER "claro"
@@ -20,9 +21,11 @@ class Communication {
 		void loop();
 		bool connectToNetwork();
 		bool connectToDataServer();
+		void disconnectFromDataServer();
 		bool isConnectedToDataServer();
 		int8_t getDataServerCommState();
-		void sendData(String payload);
+		bool sendDataMQTT(String payload);
+		bool sendDataHTML(String payload);
 
 	private:
 		Communication();  /* private so that it can  not be called */

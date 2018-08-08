@@ -64,3 +64,8 @@ void TimeEventsHandler::timeEventsHandler() {
 		}
 	}
 }
+
+void TimeEventsHandler::setTimeEventPeriod(TIME_EVENTS evt, uint16_t timePeriod) {
+	Alarm.write(alarmIds[(uint8_t) evt], (time_t) timePeriod);
+	Alarm.disable(alarmIds[(uint8_t) evt]);
+}

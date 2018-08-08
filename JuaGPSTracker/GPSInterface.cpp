@@ -17,183 +17,149 @@ GPSInterface* GPSInterface::getInstance() {
 	return pInstance;
 }
 
-GPSInterface::GPSInterface() : gpsInfo(), rfComm(RFCommunication::getInstance()) {
-}
-
-const char* GPSInterface::nextToken(const char* src, char* buf) {
-  int i = 0;
-  while (src[i] != 0 && src[i] != ',')
-    i++;
-  if (buf)
-  {
-    strncpy(buf, src, i);
-    buf[i] = 0;
-  }
-  if (src[i])
-    i++;
-  return src + i;
-}
-
-int GPSInterface::arrayToInt(const char* char_array) {
-  int temp;
-  sscanf(char_array, "%d", &temp);
-  return temp;
-}
-
-float GPSInterface::arrayToFloat(const char* char_array) {
-  float temp;
-  sscanf(char_array, "%f", &temp);
-  return temp;
-}
-void GPSInterface::convertCoords(const char* latitude, const char* longitude, const char* lat_direction,
-                   const char* lon_direction, char* lat_return, char* lon_return, int buff_length) {
-  char lat_deg[3];
-
-  // extract the first 2 chars to get the latitudinal degrees
-  strncpy(lat_deg, latitude, 2);
-
-  // null terminate
-  lat_deg[2] = 0;
-
-  char lon_deg[4];
-
-  // extract first 3 chars to get the longitudinal degrees
-  strncpy(lon_deg, longitude, 3);
-
-  // null terminate
-  lon_deg[3] = 0;
-
-  // convert to integer from char array
-  int lat_deg_int = arrayToInt(lat_deg);
-  int lon_deg_int = arrayToInt(lon_deg);
-
-  // must now take remainder/60
-  // this is to convert from degrees-mins-secs to decimal degrees
-  // so the coordinates are "google mappable"
-
-  // convert the entire degrees-mins-secs coordinates into a float - this is for easier manipulation later
-  float latitude_float = arrayToFloat(latitude);
-  float longitude_float = arrayToFloat(longitude);
-
-  // remove the degrees part of the coordinates - so we are left with only minutes-seconds part of the coordinates
-  latitude_float = latitude_float - (lat_deg_int * 100);
-  longitude_float = longitude_float - (lon_deg_int * 100);
-
-  // convert minutes-seconds to decimal
-  latitude_float /= 60;
-  longitude_float /= 60;
-
-  // add back on the degrees part, so it is decimal degrees
-  latitude_float += lat_deg_int;
-  longitude_float += lon_deg_int;
-
-  if (strcmp (lat_direction, "S") == 0) {
-    latitude_float *= -1;
-  }
-
-  if (strcmp (lon_direction, "W") == 0) {
-    longitude_float *= -1;
-  }
-  // format the coordinates nicey - no more than 6 decimal places
-  // snprintf(lat_return, buff_length, "%2.6f", latitude_float);
-  // snprintf(lon_return, buff_length, "%3.6f", longitude_float);
-  sprintf(lat_return, "%2.6f\0", latitude_float);
-  sprintf(lon_return, "%3.6f\0", longitude_float);
+GPSInterface::GPSInterface() : gpsInfo() {
+	gpsData.latitude = 0.00;
+	gpsData.longitude = 0.00;
+	gpsData.altitude = 0.00;
+	gpsData.dop = 100.00;
+	gpsData.geoid = 0.00;
+	gpsData.k_speed = 0.00;
+	gpsData.m_speed = 0.00;
+	gpsData.track_angle = 0.00;
+	gpsData.fix = 0;
+	gpsData.hour = 0;
+	gpsData.minute = 0;
+	gpsData.second = 0;
+	gpsData.sat_num = 0;
+	gpsData.day = 0;
+	gpsData.month = 0;
+	gpsData.year = 0;
+	String time_format = "00:00:00", date_format = "00:00:0000";
+	String lat_format = "0.00000", lon_format = "0.00000";
 }
 
 bool GPSInterface::isFixed() {
-	LGPS.getData(&gpsInfo);
-	const char* p = (char*)gpsInfo.GPGGA;
-	char buffer[30];
-	for(int i = 0; i < 7; i++) {
-		p = nextToken(p, buffer);
-	}
-	return buffer[0] == '1' ? true : false;
-}
-
-String GPSInterface::getData() {
-	String payload = "";
-	Serial.println("Collecting GPS data.");
-	LGPS.getData(&gpsInfo);
-	Serial.println((char*)gpsInfo.GPGGA);
-
-	char latitude[20];
-	char lat_direction[1];
-	char longitude[20];
-	char lon_direction[1];
-	char buf[20];
-	char time[30];
-
-	const char* p = (char*)gpsInfo.GPGGA;
-
-	p = nextToken(p, 0); // GGA
-	p = nextToken(p, time); // Time
-	p = nextToken(p, latitude); // Latitude
-	p = nextToken(p, lat_direction); // N or S?
-	p = nextToken(p, longitude); // Longitude
-	p = nextToken(p, lon_direction); // E or W?
-	p = nextToken(p, buf); // fix quality
-
-	const int coord_size = 12;
-	char lat_fixed[coord_size], lon_fixed[coord_size];
-	convertCoords(latitude, longitude, lat_direction, lon_direction, lat_fixed, lon_fixed, coord_size);
-	/* Obtain battery level */
-	String batteryLevel = String(LBattery.level());
-	String batteryCharging = String(LBattery.isCharging());
-	String num_sat = String(0);
-
-	/* verify if GPS is fixed */
-	if (buf[0] == '1')
-	{
-		/* GPS fix */
-		Serial.println("GPS is fixed!");
-		p = nextToken(p, buf); // number of satellites
-		num_sat = String(buf);
-
-		/* just debug messages */
-		Serial.print("JuaTracker data: [");
-		Serial.print("lat: "); Serial.print(lat_fixed); Serial.print(" lng: ");Serial.print(lon_fixed);
-		Serial.print(" Battery level: "); Serial.print(batteryLevel);
-		Serial.print(" Battery charging: "); Serial.print(batteryCharging);
-		Serial.print(" Number of satellites: "); Serial.print(num_sat);
-		Serial.print(" RF Button 0: "); Serial.print(rfComm->getRFEventState(0));
-		Serial.print(" RF Button 1: "); Serial.println(rfComm->getRFEventState(1));
-
-		/* prepare a JSON payload string for UBIDOTS */
-		payload = "{";
-		payload += "\"batl\":";
-		payload += "{\"value\":"; payload += batteryLevel;  payload += ", ";
-		payload += "\"context\":";
-		payload += "{\"lat\":"; payload += lat_fixed; payload += ", ";
-		payload += "\"lng\":"; payload += lon_fixed; payload += "}},";
-		payload += "\"batc\":"; payload += batteryCharging; payload += ", ";
-		payload += "\"nsat\":"; payload += num_sat; payload += ", ";
-		payload += "\"btn0\":"; payload += rfComm->getRFEventState(0); payload += ", ";
-		payload += "\"btn1\":"; payload += rfComm->getRFEventState(1);
-		payload += "}";
-	}
-	else {
-		Serial.println("GPS is NOT fixed yet!");
-		Serial.print("JuaTracker data: [");
-		Serial.print(" Battery level: "); Serial.print(batteryLevel);
-		Serial.print(" Battery charging: "); Serial.print(batteryCharging);
-		Serial.print(" Number of satellites: "); Serial.print(num_sat);
-		Serial.print(" RF Button 0: "); Serial.print(rfComm->getRFEventState(0));
-		Serial.print(" RF Button 1: "); Serial.println(rfComm->getRFEventState(1));
-
-		/* prepare a JSON payload string for UBIDOTS */
-		payload = "{";
-		payload += "\"batl\":"; payload += batteryLevel;  payload += ", ";
-		payload += "\"batc\":"; payload += batteryCharging; payload += ", ";
-		payload += "\"nsat\":"; payload += num_sat; payload += ", ";
-		payload += "\"btn0\":"; payload += rfComm->getRFEventState(0); payload += ", ";
-		payload += "\"btn1\":"; payload += rfComm->getRFEventState(1);
-		payload += "}";
-
-	}
-	return payload;
+	return gpsData.fix;
 }
 
 void GPSInterface::init() {
 	LGPS.powerOn();
 }
+
+void GPSInterface::powerOff() {
+	LGPS.powerOff();
+}
+
+
+String GPSInterface::parseDataJSON() {
+	String payload = "";
+
+	String batteryLevel = String(LBattery.level());
+	String batteryCharging = String(LBattery.isCharging());
+
+	/* if GPS is fixed, create JSON with all data */
+	if(parseGPSData(&gpsData) == true) {
+		Serial.println("GPS is fixed!");
+		payload = "{";
+		payload += "\"alt\":";
+		payload += "{\"value\":"; payload += gpsData.altitude;  payload += ", ";
+		payload += "\"context\":";
+		payload += "{\"lat\":"; payload += gpsData.lat_format; payload += ", ";
+		payload += "\"lng\":"; payload += gpsData.lon_format; payload += "}},";
+		payload += "\"spdk\":"; payload += gpsData.k_speed; payload += ", ";
+		payload += "\"spdm\":"; payload += gpsData.m_speed; payload += ", ";
+		payload += "\"tang\":"; payload += gpsData.track_angle; payload += ", ";
+		payload += "\"nsat\":"; payload += gpsData.sat_num; payload += ", ";
+		payload += "\"batl\":"; payload += batteryLevel; payload += ", ";
+		payload += "\"batc\":"; payload += batteryCharging;
+		payload += "}";
+	}
+	/* if not fixed, creates JSON with only available data */
+	else {
+		Serial.println("GPS is NOT fixed yet!");
+		payload = "{";
+		payload += "\"nsat\":"; payload += gpsData.sat_num; payload += ", ";
+		payload += "\"batl\":"; payload += batteryLevel; payload += ", ";
+		payload += "\"batc\":"; payload += batteryCharging;
+		payload += "}";
+	}
+	return payload;
+}
+
+float GPSInterface::convert(String str, boolean dir) {
+  double mm, dd;
+  int point = str.indexOf('.');
+  dd = str.substring(0, (point - 2)).toFloat();
+  mm = str.substring(point - 2).toFloat() / 60.00;
+  return (dir ? -1 : 1) * (dd + mm);
+}
+
+bool GPSInterface::parseGPSData(GPSData* gpsData) {
+	Serial.println("Collecting GPS data.");
+	LGPS.getData(&gpsInfo);
+	Serial.println((char*)gpsInfo.GPGGA);
+
+	if (gpsInfo.GPGGA[0] == '$') {
+		Serial.print("Parsing GGA data....");
+		String str = (char*)(gpsInfo.GPGGA);
+		str = str.substring(str.indexOf(',') + 1);
+		gpsData->hour = str.substring(0, 2).toInt();
+		gpsData->minute = str.substring(2, 4).toInt();
+		gpsData->second = str.substring(4, 6).toInt();
+		gpsData->time_format = "";
+		gpsData->time_format += gpsData->hour; gpsData->time_format += ":";
+		gpsData->time_format += gpsData->minute; gpsData->time_format += ":";
+		gpsData->time_format += gpsData->second;
+		str = str.substring(str.indexOf(',') + 1);
+		gpsData->latitude = convert(str.substring(0, str.indexOf(',')), str.charAt(str.indexOf(',') + 1) == 'S');
+		sprintf(gpsData->lat_format, "%2.6f", gpsData->latitude);
+		str = str.substring(str.indexOf(',') + 3);
+		gpsData->longitude = convert(str.substring(0, str.indexOf(',')), str.charAt(str.indexOf(',') + 1) == 'W');
+		sprintf(gpsData->lon_format, "%3.6f", gpsData->longitude);
+		str = str.substring(str.indexOf(',') + 3);
+		gpsData->fix = str.charAt(0) - 48;
+		str = str.substring(2);
+		gpsData->sat_num = str.substring(0, 2).toInt();
+		str = str.substring(3);
+		gpsData->dop = str.substring(0, str.indexOf(',')).toFloat();
+		str = str.substring(str.indexOf(',') + 1);
+		gpsData->altitude = str.substring(0, str.indexOf(',')).toFloat();
+		str = str.substring(str.indexOf(',') + 3);
+		gpsData->geoid = str.substring(0, str.indexOf(',')).toFloat();
+
+		if (gpsInfo.GPRMC[0] == '$') {
+			Serial.print("Parsing RMC data....");
+			str = (char*)(gpsInfo.GPRMC);
+			int comma = 0;
+			for (int i = 0; i < 60; ++i) {
+				if (gpsInfo.GPRMC[i] == ',') {
+					comma++;
+					if (comma == 7) {
+						comma = i + 1;
+						break;
+					}
+				}
+			}
+			str = str.substring(comma);
+			gpsData->k_speed = str.substring(0, str.indexOf(',')).toFloat();
+			gpsData->m_speed = gpsData->k_speed * 0.514;
+			str = str.substring(str.indexOf(',') + 1);
+			gpsData->track_angle = str.substring(0, str.indexOf(',')).toFloat();
+			str = str.substring(str.indexOf(',') + 1);
+			gpsData->day = str.substring(0, 2).toInt();
+			gpsData->month = str.substring(2, 4).toInt();
+			gpsData->year = str.substring(4, 6).toInt();
+			gpsData->date_format = "20"; gpsData->date_format += gpsData->year; gpsData->date_format += "-";
+			gpsData->date_format += gpsData->month; gpsData->date_format += "-";
+			gpsData->date_format += gpsData->day;
+
+			return gpsData->fix;
+		}
+	}
+	else {
+		Serial.println("No GGA data");
+	}
+
+	return false;
+}
+

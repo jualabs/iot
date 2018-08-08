@@ -3,15 +3,16 @@
 
 #include <Arduino.h>
 #include <jled.h>
+//#include "SystemController.h"
 
-#define STATUS_LED_PIN 12
+#define STATUS_LED_PIN 11
 
 class UI {
 	public:
 		static UI* getInstance();
-		enum class UI_STATE {IDLE, NETWORK_CONNECTION, DATA_SERVER_CONNECTION, GPS_NOT_FIXED, NORMAL_OPERATION};
+		enum class UI_STATE {INIT, CONNECTING_TO_NETWORK, CONNECTED_TO_NETWORK, CONNECTING_TO_DATA_SERVER, CONNECTED_TO_DATA_SERVER, GPS_NOT_FIXED, GPS_FIXED};
 		void loop();
-		void setUIState(UI_STATE state);
+		void setUIState(UI::UI_STATE state);
 
 	private:
 		UI();  /* private so that it can  not be called */

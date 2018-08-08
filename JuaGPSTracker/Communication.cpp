@@ -35,6 +35,10 @@ bool Communication::connectToDataServer() {
 	return mqttClient.connect(mqttClientId, ubidotsToken, "");
 }
 
+void Communication::disconnectFromDataServer() {
+	return mqttClient.disconnect();
+}
+
 bool Communication::isConnectedToDataServer() {
 	return mqttClient.connected();
 }
@@ -45,12 +49,49 @@ int8_t Communication::getDataServerCommState() {
 
 
 /* UBIDOTS MQTT SEND DATA */
-void Communication::sendData(String payload) {
-	char payloadChar[200];
-	payload.toCharArray(payloadChar, 200);
-	mqttClient.publish(ubidotsTopic, payloadChar);
-	Serial.print("Published (");
-	Serial.print(strlen(payloadChar));
-	Serial.print(" bytes): ");
-	Serial.println(payloadChar);
+bool Communication::sendDataMQTT(String payload) {
+	if(mqttClient.connected()) {
+		char payloadChar[256];
+		payload.toCharArray(payloadChar, 256);
+		mqttClient.publish(ubidotsTopic, payloadChar);
+		Serial.print("Published (");
+		Serial.print(strlen(payloadChar));
+		Serial.print(" bytes): ");
+		Serial.println(payloadChar);
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+bool Communication::sendDataHTML(String payload) {
+
+	Serial.print("Sending JSON through HTML: ");
+	Serial.println(payload);
+
+	if (gprsClient.connect(UBIDOTS_SERVER, 80)) {
+		Serial.println("Connected!");  // Console monitoring
+		gprsClient.print(F("POST "));
+		gprsClient.print(PATH);
+		gprsClient.print(F(" HTTP/1.1\r\n"));
+		gprsClient.print(F("Content-Type: application/json\r\n"));
+		gprsClient.print(F("Host: "));
+		gprsClient.print(UBIDOTS_SERVER);
+		gprsClient.print(F("\r\n"));
+		gprsClient.print(F("Content-Length: "));
+		gprsClient.print(payload.length());
+		gprsClient.print(F("\r\n"));
+		gprsClient.print(F("\r\n"));
+		gprsClient.print(payload);
+		gprsClient.println();
+		Serial.println(gprsClient.readStringUntil('\n'));
+		gprsClient.stop();
+		return true;
+	}
+	else {
+		Serial.println(F("Connection failed"));
+		gprsClient.stop();
+		return false;
+	}
 }

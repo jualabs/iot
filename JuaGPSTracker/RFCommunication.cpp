@@ -30,7 +30,7 @@ RFCommunication::RFCommunication() : rfController(RCSwitch()) {
 }
 
 void RFCommunication::init() {
-	rfController.enableReceive(1);
+	rfController.enableReceive(0);
 }
 
 void RFCommunication::loop() {

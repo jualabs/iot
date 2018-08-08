@@ -6,7 +6,7 @@
 #include <TimeLib.h>
 #include <TimeAlarms.h>
 
-#define SEND_GPS_DATA_PERIOD 10
+#define SEND_GPS_DATA_PERIOD 20
 
 class TimeEventsHandler {
 	public:
@@ -20,6 +20,7 @@ class TimeEventsHandler {
 		void setTimeEvent(TIME_EVENTS evt);
 		void clearTimeEvent(TIME_EVENTS evt);
 		void timeEventsHandler();
+		void setTimeEventPeriod(TIME_EVENTS evt, uint16_t timePeriod);
 	private:
 		TimeEventsHandler();  // private so that it can  not be called
 		TimeEventsHandler(const TimeEventsHandler&) = delete;

@@ -252,6 +252,9 @@ void ButtonEventsHandler::dumpExperimentStateBtnEventHandler() {
 void ButtonEventsHandler::stopExperimentBtnEventHandler() {
 	// #ifdef DEBUG
 	Serial.println("experiment stopped...");
+	context->setIsManuallyIrrigating(false);
+	actuators->setManPump(false);
+	actuators->setAutoPump(false);
 	// #else
 	/* change the current system state */
 	context->changeState(Context::State::GET_DATA);

@@ -1,6 +1,5 @@
 #include "UI.h"
 
-
 UI* ui;
 
 /* global static pointer used to ensure a single instance of the class. */
@@ -19,32 +18,36 @@ UI* UI::getInstance() {
 }
 
 UI::UI() : statusLED(JLed(STATUS_LED_PIN)) {
-	currentUIState = UI_STATE::NETWORK_CONNECTION;
-	/* set a invalid value for lastUIState to force state changing on first run */
-	lastUIState = UI_STATE::IDLE;
+	/* set a invalid value for currentUIState to force state changing on first run */
+	currentUIState = UI::UI_STATE::INIT;
+	lastUIState = UI::UI_STATE::INIT;
 }
 
 void UI::loop() {
-	if (lastUIState != currentUIState) {
+	statusLED.Update();
+}
+
+void UI::setUIState(UI::UI_STATE state) {
+	currentUIState = state;
+	if (currentUIState != lastUIState) {
 		lastUIState = currentUIState;
 		switch(currentUIState) {
-			case UI_STATE::NETWORK_CONNECTION:
+			case UI::UI_STATE::INIT:
+			case UI::UI_STATE::CONNECTING_TO_NETWORK:
+			case UI::UI_STATE::CONNECTED_TO_NETWORK:
 				statusLED.Blink(150, 150).Forever();
 				break;
-			case UI_STATE::DATA_SERVER_CONNECTION:
+			case UI::UI_STATE::CONNECTING_TO_DATA_SERVER:
+			case UI::UI_STATE::CONNECTED_TO_DATA_SERVER:
 				statusLED.Blink(1000, 1000).Forever();
 				break;
-			case UI_STATE::GPS_NOT_FIXED:
-				statusLED.Blink(3000, 3000).Forever();
+			case UI::UI_STATE::GPS_FIXED:
+				statusLED.Blink(150, 19850).Forever();
 				break;
-			case UI_STATE::NORMAL_OPERATION:
-				statusLED.Blink(150, 9850).Forever();
+			case UI::UI_STATE::GPS_NOT_FIXED:
+				statusLED.Blink(2000, 2000).Forever();
 				break;
 		}
 	}
 	statusLED.Update();
-}
-
-void UI::setUIState(UI_STATE state) {
-	currentUIState = state;
 }
