@@ -6,7 +6,7 @@
 #include <TimeLib.h>
 #include <TimeAlarms.h>
 
-#define SEND_GPS_DATA_PERIOD 20
+#define SEND_GPS_DATA_PERIOD 10
 
 class TimeEventsHandler {
 	public:

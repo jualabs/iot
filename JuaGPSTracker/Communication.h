@@ -5,9 +5,12 @@
 #include <PubSubClient.h>
 #include <LGPRS.h>
 #include <LGPRSClient.h>
+#include <LGPRSUdp.h>
 
 #define UBIDOTS_SERVER "things.ubidots.com"
 #define PATH "/api/v1.6/devices/calango-viajante?token=A1E-cl4w5Oltm5tBxLbsY9ucNn3xA1Dsyu"
+#define MAX_RESPONSE_TIME 5000
+#define GPRS_CONNECTION_TIMEOUT 15000
 
 /* APN of your cellular provider */
 #define APN "claro.com.br"
@@ -26,13 +29,14 @@ class Communication {
 		int8_t getDataServerCommState();
 		bool sendDataMQTT(String payload);
 		bool sendDataHTML(String payload);
-
+		bool sendDataUDP(String payload);
 	private:
 		Communication();  /* private so that it can  not be called */
 		Communication(const Communication&) = delete;
 		Communication& operator=(const Communication&) = delete;
 		static Communication* pInstance;
 		LGPRSClient gprsClient;
+		LGPRSUDP udpClient;
 		PubSubClient mqttClient;
 		const char* mqttServer = "things.ubidots.com";
 		uint16_t mqttPort= 1883;

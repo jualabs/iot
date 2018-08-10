@@ -35,6 +35,7 @@ void UI::setUIState(UI::UI_STATE state) {
 			case UI::UI_STATE::INIT:
 			case UI::UI_STATE::CONNECTING_TO_NETWORK:
 			case UI::UI_STATE::CONNECTED_TO_NETWORK:
+			case UI::UI_STATE::CONNECTING_SMS:
 				statusLED.Blink(150, 150).Forever();
 				break;
 			case UI::UI_STATE::CONNECTING_TO_DATA_SERVER:
@@ -42,7 +43,7 @@ void UI::setUIState(UI::UI_STATE state) {
 				statusLED.Blink(1000, 1000).Forever();
 				break;
 			case UI::UI_STATE::GPS_FIXED:
-				statusLED.Blink(150, 19850).Forever();
+				statusLED.Blink(150, 4850).Forever();
 				break;
 			case UI::UI_STATE::GPS_NOT_FIXED:
 				statusLED.Blink(2000, 2000).Forever();

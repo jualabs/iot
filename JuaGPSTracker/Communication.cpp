@@ -16,15 +16,16 @@ Communication* Communication::getInstance() {
 }
 
 Communication::Communication() : gprsClient(), mqttClient(gprsClient) {
-
+	gprsClient.setTimeout(GPRS_CONNECTION_TIMEOUT);
 }
 
 void Communication::init() {
-	mqttClient.setServer(mqttServer, mqttPort);
+	// mqttClient.setServer(mqttServer, mqttPort);
+
 }
 
 void Communication::loop() {
-	mqttClient.loop();
+	// mqttClient.loop();
 }
 
 bool Communication::connectToNetwork() {
@@ -47,8 +48,8 @@ int8_t Communication::getDataServerCommState() {
 	return (int8_t) mqttClient.state();
 }
 
+#if 0
 
-/* UBIDOTS MQTT SEND DATA */
 bool Communication::sendDataMQTT(String payload) {
 	if(mqttClient.connected()) {
 		char payloadChar[256];
@@ -64,6 +65,7 @@ bool Communication::sendDataMQTT(String payload) {
 		return false;
 	}
 }
+#endif
 
 bool Communication::sendDataHTML(String payload) {
 
@@ -85,9 +87,29 @@ bool Communication::sendDataHTML(String payload) {
 		gprsClient.print(F("\r\n"));
 		gprsClient.print(payload);
 		gprsClient.println();
-		Serial.println(gprsClient.readStringUntil('\n'));
+#if 1
+		uint32_t responseTime = millis();
+	    while (true) {
+	        if (gprsClient.available()) {
+	            char c = gprsClient.read();
+	            if (c < 0) {
+	                break;
+	            }
+	            else {
+	                Serial.print(c);
+	            }
+	        }
+	        else {
+	            if ((millis() - responseTime) > MAX_RESPONSE_TIME){
+	                Serial.println("stop Client");
+	                gprsClient.stop();
+	                break;
+	            }
+	        }
+	    }
 		gprsClient.stop();
 		return true;
+#endif
 	}
 	else {
 		Serial.println(F("Connection failed"));
@@ -95,3 +117,28 @@ bool Communication::sendDataHTML(String payload) {
 		return false;
 	}
 }
+
+#if 0
+bool Communication::sendDataUDP(String payload) {
+
+	payload = "LinkitONE/1.0|POST|A1E-cl4w5Oltm5tBxLbsY9ucNn3xA1Dsyu|calango-viajante=>udp-teste:30|end\r\n";
+	uint16_t payloadLength = payload.length() + 1;
+
+	char* udpBuffer = (char *) malloc((payloadLength) * sizeof(char));
+	udpBuffer[payloadLength-1] = '\0';
+	payload.toCharArray(udpBuffer, payloadLength, 0);
+
+	Serial.print("Sending JSON through UDP: ");
+	Serial.println(udpBuffer);
+
+	udpClient.beginPacket("translate.ubidots.com", 9012);
+	udpClient.write(udpBuffer, payloadLength);
+	udpClient.endPacket();
+
+	free(udpBuffer);
+
+	Serial.println("Sent UDP datagram...");
+
+	return true;
+}
+#endif

@@ -20,7 +20,7 @@ TimeEventsHandler::TimeEventsHandler() {
 }
 
 void TimeEventsHandler::loop() {
-	Alarm.delay(10);
+	Alarm.delay(1);
 }
 
 void TimeEventsHandler::initTimeEvents() {

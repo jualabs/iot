@@ -12,8 +12,8 @@ typedef struct GPSData_t {
 	float altitude;
 	float dop;
 	float geoid;
-	float k_speed;
-	float m_speed;
+	float knts_speed;
+	float kmh_speed;
 	float track_angle;
 	uint8_t fix;
 	uint8_t hour;
@@ -27,6 +27,8 @@ typedef struct GPSData_t {
 	String date_format;
 	char lat_format[12];
 	char lon_format[12];
+	char lastValidLatitude[12];
+	char lastValidLongitude[12];
 } GPSData;
 
 class GPSInterface {
@@ -34,6 +36,7 @@ class GPSInterface {
 		static GPSInterface* getInstance();
 		void init();
 		String parseDataJSON();
+		String parseDataSMS();
 		bool isFixed();
 		void powerOff();
 
