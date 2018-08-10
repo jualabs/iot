@@ -8,7 +8,7 @@
 #include <LGPRSUdp.h>
 
 #define UBIDOTS_SERVER "things.ubidots.com"
-#define PATH "/api/v1.6/devices/calango-viajante?token=A1E-cl4w5Oltm5tBxLbsY9ucNn3xA1Dsyu"
+#define PATH "/api/v1.6/devices/calango-viajante?token=<>"
 #define MAX_RESPONSE_TIME 5000
 #define GPRS_CONNECTION_TIMEOUT 15000
 
