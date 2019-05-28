@@ -1,6 +1,0 @@
-{
-    "terminal.integrated.env.osx": {
-        "PATH": "/Users/victormedeiros/.platformio/penv/bin:/Users/victormedeiros/.platformio/penv:/Users/victormedeiros/esp/xtensa-esp32-elf/bin:/Library/Frameworks/Python.framework/Versions/3.7/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/texbin:/opt/X11/bin:/Users/victormedeiros/Documents/psd/storm/bin",
-        "PLATFORMIO_CALLER": "vscode"
-    }
-}
