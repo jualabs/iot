@@ -3,7 +3,7 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := app-gps
+PROJECT_NAME := app-jua-ams-proto-a0
 
 include $(IDF_PATH)/make/project.mk
 
