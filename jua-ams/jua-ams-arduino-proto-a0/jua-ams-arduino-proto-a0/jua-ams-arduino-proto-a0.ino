@@ -2,6 +2,9 @@
 #include <SdFat.h>
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
+#include <TimeLib.h>
+
+#undef DEBUG
 
 // pino A4 -> SDA do MPU
 // pino A5 -> SCL do MPU
@@ -25,13 +28,15 @@ SdFat sdCard;
 SdFile dadosAcc;
 SdFile dadosGPS;
 
-const uint8_t chipSelect = 10;
+// pino placa pedro
+// const uint8_t chipSelect = 10;
+// pino placa jua labs
+const uint8_t chipSelect = 8;
 const uint16_t period = 60000; // 60000 -> 1 minute
 const uint16_t periodMPU = 100;
 const uint16_t num_accel_samples = 10;
 
 unsigned long time_now = 0;
-unsigned long timeMPU = 0;
 
 struct acc_samples_t {
   uint32_t ts;
@@ -45,55 +50,46 @@ struct acc_samples_t {
 } acc_samples[num_accel_samples];
 
 uint16_t cur_sample = 0;
+time_t start_ts = 0;
+char filename[20];
 
-static void smartDelay(unsigned long ms)
-{
+static void smartDelay(unsigned long ms) {
   unsigned long start = millis();
-  do 
-  {
+  do {
     while (ss.available())
       gps.encode(ss.read());
   } while (millis() - start < ms);
 }
 
 void lerGPS() {
-  //Serial.println(F("lendo gps..."));
-  //smartDelay(1000);
-  //if (ss.available() > 0) {
-   //Serial.print(F("tem dado..."));
-    //gps.encode(ss.read());
-    //Serial.println(F("OK!"));
-      if (gps.location.isUpdated()) { 
-        Serial.println(F("tem localizacao...")); 
-        if (!dadosGPS.open("gps.txt", O_RDWR | O_CREAT | O_AT_END)) {
-          sdCard.errorHalt(F("Erro na abertura do arquivo DADOS_GPS.TXT!"));
-        }
-
-        Serial.print(F("time = ")); Serial.print(gps.time.value()); // Raw time in HHMMSSCC format (u32)
-        dadosGPS.print(gps.time.value());
-
-        Serial.print(F(" | millis=")); Serial.print(millis()); 
-        dadosGPS.print(";"); dadosGPS.print(millis());
-        
-        Serial.print(F(" | lat = ")); Serial.print(gps.location.lat(), 6);
-        dadosGPS.print(";"); dadosGPS.print(gps.location.lat(), 6);
-      
-        Serial.print(F(" | lng = ")); Serial.println(gps.location.lng(), 6);
-        dadosGPS.print(";"); dadosGPS.println(gps.location.lng(), 6);
-
-        dadosGPS.close();
-        
-      }
-    // }
+  if (gps.location.isUpdated() && gps.location.isValid()) {
+    sprintf(filename, "%ld-gps.txt", start_ts);
+    if (!dadosGPS.open(filename, O_RDWR | O_CREAT | O_AT_END)) {
+      sdCard.errorHalt(F("\nerro na abertura do arquivo do gps!"));
+    }
+    setTime(gps.time.hour(), gps.time.minute(), gps.time.second(),
+            gps.date.day(), gps.date.month(), gps.date.year());
+    #ifdef DEBUG
+    Serial.print(F("\ntem localizacao..."));
+    Serial.print(F("ts = ")); Serial.print(now()); // Raw time in HHMMSSCC format (u32)
+    Serial.print(F(" | lat = ")); Serial.print(gps.location.lat(), 6);
+    Serial.print(F(" | lng = ")); Serial.println(gps.location.lng(), 6);
+    #endif
+    // escreve dados do GPS no arquivo
+    dadosGPS.print(now());
+    dadosGPS.print(";"); dadosGPS.print(gps.location.lat(), 6);
+    dadosGPS.print(";"); dadosGPS.println(gps.location.lng(), 6);
+    dadosGPS.close();
   }
+}
 
 void lerMPU() {
   Wire.beginTransmission(MPU);
   Wire.write(0x3B);  // starting with register 0x3B (ACCEL_XOUT_H)
   Wire.endTransmission(false);
-  //Solicita os dados do sensor
+  // solicita os dados do sensor
   Wire.requestFrom(MPU, 14, true);
-    
+
   //Armazena o valor dos sensores nas variaveis correspondentes
   acc_samples[cur_sample].AcX = Wire.read() << 8 | Wire.read(); //0x3B (ACCEL_XOUT_H) & 0x3C (ACCEL_XOUT_L)
   acc_samples[cur_sample].AcY = Wire.read() << 8 | Wire.read(); //0x3D (ACCEL_YOUT_H) & 0x3E (ACCEL_YOUT_L)
@@ -102,9 +98,9 @@ void lerMPU() {
   acc_samples[cur_sample].GyX = Wire.read() << 8 | Wire.read(); //0x43 (GYRO_XOUT_H) & 0x44 (GYRO_XOUT_L)
   acc_samples[cur_sample].GyY = Wire.read() << 8 | Wire.read(); //0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
   acc_samples[cur_sample].GyZ = Wire.read() << 8 | Wire.read(); //0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
-  acc_samples[cur_sample].ts = millis();
-
-  Serial.print(F("millis = ")); Serial.print(acc_samples[cur_sample].ts); 
+  acc_samples[cur_sample].ts = now();
+  #ifdef DEBUG
+  Serial.print(F("millis = ")); Serial.print(acc_samples[cur_sample].ts);
   // envia valor 'x' do acelerometro para a serial
   Serial.print(F(" | acc_x = ")); Serial.print(acc_samples[cur_sample].AcX);
   // envia valor 'y' do acelerometro para a serial
@@ -119,8 +115,9 @@ void lerMPU() {
   Serial.print(F(" | gyr_y = ")); Serial.print(acc_samples[cur_sample].GyY);
   // envia valor 'z' do giroscopio para a serial
   Serial.print(F(" | gyr_z = ")); Serial.println(acc_samples[cur_sample].GyZ);
+  #endif
   cur_sample++;
-  if(cur_sample == 10) {
+  if (cur_sample == 10) {
     writeAccData();
     // reinicializa o buffer temporario
     cur_sample = 0;
@@ -128,12 +125,15 @@ void lerMPU() {
 }
 
 void writeAccData() {
-  if (!dadosAcc.open("acc.txt", O_RDWR | O_CREAT | O_AT_END)) {
-    sdCard.errorHalt(F("Erro na abertura do arquivo acc.txt!"));
+  sprintf(filename, "%ld-acc.txt", start_ts);
+  if (!dadosAcc.open(filename, O_RDWR | O_CREAT | O_AT_END)) {
+    sdCard.errorHalt(F("Erro na abertura do arquivo do acelerometro!"));
   }
+  #ifdef DEBUG
   Serial.print(F("writing accelerometer data..."));
+  #endif
   // escreve todas as amostras coletadas
-  for(uint16_t i = 0; i < cur_sample; i++) {
+  for (uint16_t i = 0; i < cur_sample; i++) {
     dadosAcc.print(acc_samples[i].ts);
     // escreve valor 'x' do acelerometro no arquivo
     dadosAcc.print(F(";")); dadosAcc.print(acc_samples[i].AcX);
@@ -142,7 +142,7 @@ void writeAccData() {
     // escreve valor 'z' do acelerometro no arquivo
     dadosAcc.print(F(";")); dadosAcc.print(acc_samples[i].AcZ);
     // escreve valor da temperatura no arquivo
-    dadosAcc.print(F(";")); dadosAcc.print(acc_samples[i].Tmp/340.00+36.53);
+    dadosAcc.print(F(";")); dadosAcc.print(acc_samples[i].Tmp / 340.00 + 36.53);
     // escreve valor 'x' do giroscopio no arquivo
     dadosAcc.print(F(";")); dadosAcc.print(acc_samples[i].GyX);
     // escreve valor 'y' do giroscopio no arquivo
@@ -150,25 +150,43 @@ void writeAccData() {
     // escreve valor 'z' do giroscopio no arquivo
     dadosAcc.print(F(";")); dadosAcc.println(acc_samples[i].GyZ);
   }
-  Serial.println(F("OK"));
+  #ifdef DEBUG
+  Serial.println(F("ok"));
+  #endif
   // fecha o arquivo
   dadosAcc.close();
 }
 
-void setup()
-{
+void setup() {
+  #ifdef DEBUG
   Serial.begin(115200);
+  #endif
   ss.begin(GPSBaud);
   Wire.begin();
   Wire.beginTransmission(MPU);
   Wire.write(0x6B);
 
-  if(!sdCard.begin(chipSelect,SPI_HALF_SPEED)) {
+  if (!sdCard.begin(chipSelect, SPI_HALF_SPEED)) {
     sdCard.initErrorHalt();
   }
   // inicializa o MPU-6050
   Wire.write(0);
   Wire.endTransmission(true);
+  // aguarda que a hora seja atualiazada pelo GPS
+  #ifdef DEBUG
+  Serial.print(F("\nwaiting gps fix: "));
+  #endif
+  do {
+    while (ss.available())
+      gps.encode(ss.read());
+  } while (!gps.location.isValid() || !gps.location.isUpdated());
+  #ifdef DEBUG
+  Serial.println(F("ok"));
+  #endif
+  // captura a hora do GPS
+  setTime(gps.time.hour(), gps.time.minute(), gps.time.second(),
+          gps.date.day(), gps.date.month(), gps.date.year());
+  start_ts = now();
 }
 
 void loop() {
@@ -177,11 +195,6 @@ void loop() {
     time_now = millis();
     lerGPS();
   }
-
-  smartDelay(100);
-  // verifica se passou o tempo para escrita dos dados temporarios do acelerometro no arquivo
-  //if(millis() > timeMPU + periodMPU) {
-  //  timeMPU = millis();
-    lerMPU();  
-  //}  
+  smartDelay(periodMPU);
+  lerMPU();
 }
