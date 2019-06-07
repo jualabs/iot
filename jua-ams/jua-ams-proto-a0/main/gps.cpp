@@ -23,13 +23,10 @@ char *readLine(uart_port_t uart) {
 		} // End of read a character
 	} // End of loop
 } // End of readLine
-/*
-void doGPS() {
-    printf("Hello World!\n");
-}
-*/
-void doGPS(void*) {
-	ESP_LOGD(tag, ">> doGPS");
+
+
+void initGPS(void*) {
+	ESP_LOGI(tag, ">> GPS init...");
 	uart_config_t myUartConfig;
 	myUartConfig.baud_rate           = 9600;
 	myUartConfig.data_bits           = UART_DATA_8_BITS;
@@ -45,34 +42,34 @@ void doGPS(void*) {
 			GPS_TX_PIN,         // RX
 			UART_PIN_NO_CHANGE, // RTS
 			UART_PIN_NO_CHANGE  // CTS
-  );
-
+  	);
 	uart_driver_install(UART_NUM_1, 2048, 2048, 0, NULL, 0);
+}
 
-	while(1) {
-		char *line = readLine(UART_NUM_1);
-		//ESP_LOGD(tag, "%s", line);
-		switch(minmea_sentence_id(line, false)) {
+void readGPS() {
+	char *line = readLine(UART_NUM_1);
+	//ESP_LOGD(tag, "%s", line);
+	switch(minmea_sentence_id(line, false)) {
 		case MINMEA_SENTENCE_RMC:
 			ESP_LOGD(tag, "Sentence - MINMEA_SENTENCE_RMC");
-      struct minmea_sentence_rmc frame;
-      if (minmea_parse_rmc(&frame, line)) {
-          ESP_LOGD(tag, "$xxRMC: raw coordinates and speed: (%d/%d,%d/%d) %d/%d",
-                  frame.latitude.value, frame.latitude.scale,
-                  frame.longitude.value, frame.longitude.scale,
-                  frame.speed.value, frame.speed.scale);
-          ESP_LOGD(tag, "$xxRMC fixed-point coordinates and speed scaled to three decimal places: (%d,%d) %d",
+      		struct minmea_sentence_rmc frame;
+      		if (minmea_parse_rmc(&frame, line)) {
+          		ESP_LOGD(tag, "$xxRMC: raw coordinates and speed: (%d/%d,%d/%d) %d/%d",
+                  			  frame.latitude.value, frame.latitude.scale,
+                  			  frame.longitude.value, frame.longitude.scale,
+                  			  frame.speed.value, frame.speed.scale);
+          		ESP_LOGD(tag, "$xxRMC fixed-point coordinates and speed scaled to three decimal places: (%d,%d) %d",
                   minmea_rescale(&frame.latitude, 1000),
                   minmea_rescale(&frame.longitude, 1000),
                   minmea_rescale(&frame.speed, 1000));
-          ESP_LOGD(tag, "$xxRMC floating point degree coordinates and speed: (%f,%f) %f",
+          		ESP_LOGD(tag, "$xxRMC floating point degree coordinates and speed: (%f,%f) %f",
                   minmea_tocoord(&frame.latitude),
                   minmea_tocoord(&frame.longitude),
                   minmea_tofloat(&frame.speed));
-      }
-      else {
-      	ESP_LOGD(tag, "$xxRMC sentence is not parsed\n");
-      }
+      		}
+      		else {
+      			ESP_LOGD(tag, "$xxRMC sentence is not parsed\n");
+      		}
 			break;
 		case MINMEA_SENTENCE_GGA:
 			//ESP_LOGD(tag, "Sentence - MINMEA_SENTENCE_GGA");
@@ -83,7 +80,5 @@ void doGPS(void*) {
 		default:
 			//ESP_LOGD(tag, "Sentence - other");
 			break;
-		}
 	}
 }
-// doGPS
