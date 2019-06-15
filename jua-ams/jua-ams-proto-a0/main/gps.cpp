@@ -1,16 +1,21 @@
 #include "esp_log.h"
 #include "driver/uart.h"
 #include "minmea.h"
+#include "esp_timer.h"
+#include "time.h"
 
 #define GPS_TX_PIN (GPIO_NUM_12)
 
 static char tag[] = "gps";
+
+char *line;
 
 
 char *readLine(uart_port_t uart) {
 	static char line[256];
 	int size;
 	char *ptr = line;
+
 	while(1) {
 		size = uart_read_bytes(uart, (unsigned char *)ptr, 1, portMAX_DELAY);
 		if (size == 1) {
@@ -25,7 +30,7 @@ char *readLine(uart_port_t uart) {
 } // End of readLine
 
 
-void initGPS(void*) {
+void initGPS() {
 	ESP_LOGI(tag, ">> GPS init...");
 	uart_config_t myUartConfig;
 	myUartConfig.baud_rate           = 9600;
@@ -47,7 +52,6 @@ void initGPS(void*) {
 }
 
 void readGPS() {
-	char *line = readLine(UART_NUM_1);
 	//ESP_LOGD(tag, "%s", line);
 	switch(minmea_sentence_id(line, false)) {
 		case MINMEA_SENTENCE_RMC:
@@ -66,6 +70,23 @@ void readGPS() {
                   minmea_tocoord(&frame.latitude),
                   minmea_tocoord(&frame.longitude),
                   minmea_tofloat(&frame.speed));
+				
+				struct timespec ts;
+				minmea_gettime(&ts, &frame.date, &frame.time);
+				ESP_LOGD(tag, "$xxRMC time: %ld", ts.tv_sec);
+				// Use POSIX and C standard library functions to work with files.
+				// First create a file.
+				ESP_LOGI(tag, "Opening file");
+				FILE* f = fopen("/sdcard/gps.txt", "a");
+				if (f == NULL) {
+					ESP_LOGE(tag, "Failed to open file for writing");
+					return;
+				}
+				fprintf(f, "%ld;%f;%f\n", ts.tv_sec,
+										 minmea_tocoord(&frame.latitude),
+										 minmea_tocoord(&frame.longitude));
+				fclose(f);
+				ESP_LOGI(tag, "File written");
       		}
       		else {
       			ESP_LOGD(tag, "$xxRMC sentence is not parsed\n");
@@ -81,4 +102,11 @@ void readGPS() {
 			//ESP_LOGD(tag, "Sentence - other");
 			break;
 	}
+}
+
+void smartDelay(int64_t us) {
+  int64_t start = esp_timer_get_time();
+  do {
+	line = readLine(UART_NUM_1);
+  } while (esp_timer_get_time() - start < us);
 }
